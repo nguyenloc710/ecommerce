@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "spring-service.name" . }}
+  labels:
+    {{- include "spring-service.labels" . | nindent 4 }}
+data:
+  SERVER_PORT: {{ .Values.containerPort | quote }}
+  APP_VERSION: {{ .Values.image.tag | quote }}
+  JAVA_TOOL_OPTIONS: {{ .Values.javaOpts | quote }}
+  {{- range $key, $value := .Values.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

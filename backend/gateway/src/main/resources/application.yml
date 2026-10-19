@@ -1,0 +1,118 @@
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+spring:
+  application:
+    name: gateway
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/ecommerce}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/ecommerce/protocol/openid-connect/certs}
+          audiences: ecommerce-api
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+                allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+                allowed-headers: "*"
+                exposed-headers: X-Trace-Id
+                allow-credentials: true
+                max-age: 3600
+          default-filters:
+            - RemoveRequestHeader=Cookie
+          routes:
+            - id: customer
+              uri: ${CUSTOMER_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/customers/**,/api/admin/customers/**,/api/admin/staff/**
+            - id: catalog
+              uri: ${CATALOG_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/reviews/**,/api/admin/catalog/**,/api/admin/inventory/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@userOrIpKeyResolver}"
+                    redis-rate-limiter.replenishRate: 2
+                    redis-rate-limiter.burstCapacity: 120
+                    redis-rate-limiter.requestedTokens: 1
+            - id: order-create
+              uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/orders
+                - Method=POST
+              filters:
+                # Tạo đơn: tối đa ~10 lần/phút/user
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@userOrIpKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 60
+                    redis-rate-limiter.requestedTokens: 6
+            - id: order
+              uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/cart/**,/api/orders/**,/api/payments/**,/api/vouchers/**,/api/admin/orders/**,/api/admin/vouchers/**
+            - id: webhooks
+              uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/webhooks/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 100
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,loggers
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+    export:
+      enabled: ${TRACING_EXPORT_ENABLED:false}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
+
+logging:
+  level:
+    vn.ecommerce: INFO
+  structured:
+    ecs:
+      service:
+        name: ${spring.application.name}
+        version: ${APP_VERSION:dev}
+        environment: ${APP_ENV:local}
+
+---
+spring:
+  config:
+    activate:
+      on-cloud-platform: kubernetes
+logging:
+  structured:
+    format:
+      console: ecs

@@ -1,0 +1,40 @@
+# catalog-service — môi trường prod. Tag ảnh do CI cập nhật.
+image:
+  repository: ghcr.io/your-org/ecommerce/catalog-service
+  tag: "0000000"
+
+replicas: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 768Mi
+  limits:
+    memory: 768Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+
+pdb:
+  enabled: true
+
+env:
+  APP_ENV: prod
+  KEYCLOAK_ISSUER_URI: https://auth.example.vn/realms/ecommerce
+  KEYCLOAK_JWK_SET_URI: http://keycloak-service:8080/realms/ecommerce/protocol/openid-connect/certs
+  TRACING_EXPORT_ENABLED: "true"
+  OTLP_TRACING_ENDPOINT: http://alloy.platform:4318/v1/traces
+  DB_URL: jdbc:postgresql://pg-rw:5432/catalog_db
+  RABBITMQ_HOST: rabbitmq
+
+# SealedSecret cung cấp DB_USERNAME/DB_PASSWORD, RABBITMQ_*, KEYCLOAK_CLIENT_SECRET...
+envFromSecrets:
+  - catalog-service-secrets
+
+networkPolicy:
+  ingressFrom:
+    - gateway
+    - order-service
+  ingressFromNamespaces: []

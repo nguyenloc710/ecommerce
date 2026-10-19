@@ -1,0 +1,35 @@
+{{- if .Values.networkPolicy.enabled }}
+# Chỉ cho phép đúng các pod/namespace khai báo gọi vào service này.
+# Namespace cần có thêm một NetworkPolicy default-deny (deploy/platform/).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "spring-service.name" . }}
+  labels:
+    {{- include "spring-service.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "spring-service.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: http
+      from:
+        {{- range .Values.networkPolicy.ingressFrom }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ . }}
+        {{- end }}
+        {{- range .Values.networkPolicy.ingressFromNamespaces }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+        {{- end }}
+        {{- with .Values.networkPolicy.allowMonitoringFrom }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+        {{- end }}
+{{- end }}

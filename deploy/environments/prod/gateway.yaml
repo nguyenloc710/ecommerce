@@ -1,0 +1,41 @@
+# gateway — môi trường prod. Tag ảnh do CI cập nhật.
+image:
+  repository: ghcr.io/your-org/ecommerce/gateway
+  tag: "0000000"
+
+replicas: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 384Mi
+  limits:
+    memory: 384Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+
+pdb:
+  enabled: true
+
+env:
+  APP_ENV: prod
+  KEYCLOAK_ISSUER_URI: https://auth.example.vn/realms/ecommerce
+  KEYCLOAK_JWK_SET_URI: http://keycloak-service:8080/realms/ecommerce/protocol/openid-connect/certs
+  TRACING_EXPORT_ENABLED: "true"
+  OTLP_TRACING_ENDPOINT: http://alloy.platform:4318/v1/traces
+  REDIS_HOST: valkey
+  CORS_ALLOWED_ORIGINS: https://shop.example.vn
+  CUSTOMER_SERVICE_URL: http://customer-service:8080
+  CATALOG_SERVICE_URL: http://catalog-service:8080
+  ORDER_SERVICE_URL: http://order-service:8080
+
+# SealedSecret cung cấp DB_USERNAME/DB_PASSWORD, RABBITMQ_*, KEYCLOAK_CLIENT_SECRET...
+envFromSecrets: []
+
+networkPolicy:
+  ingressFrom: []
+  ingressFromNamespaces:
+    - kube-system

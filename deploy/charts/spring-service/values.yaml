@@ -1,0 +1,84 @@
+# Giá trị mặc định; mỗi service ghi đè trong deploy/environments/<env>/<service>.yaml
+
+image:
+  repository: ghcr.io/your-org/ecommerce/service
+  tag: ""            # bắt buộc, tag = git SHA (không dùng latest)
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+replicas: 1
+
+containerPort: 8080
+
+# Biến môi trường dạng key: value (đưa vào ConfigMap)
+env: {}
+
+# Tên các Secret (SealedSecret giải mã ra) nạp toàn bộ làm biến môi trường
+envFromSecrets: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    # Không đặt CPU limit cho JVM để tránh bị throttle; chỉ giới hạn memory
+    memory: 512Mi
+
+javaOpts: "-XX:MaxRAMPercentage=75"
+
+probes:
+  startup:
+    failureThreshold: 30
+    periodSeconds: 5
+  liveness:
+    periodSeconds: 10
+    failureThreshold: 3
+  readiness:
+    periodSeconds: 5
+    failureThreshold: 3
+
+# preStop sleep để Traefik/Service kịp rút pod khỏi endpoint trước khi Spring tắt
+preStopSleepSeconds: 10
+terminationGracePeriodSeconds: 45
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+pdb:
+  enabled: false
+  minAvailable: 1
+
+serviceAccount:
+  create: true
+  automountToken: false
+
+networkPolicy:
+  enabled: true
+  # Label app.kubernetes.io/name của các pod được phép gọi vào service này
+  ingressFrom: []
+  # Namespace được phép gọi vào (vd. traefik ở kube-system)
+  ingressFromNamespaces: []
+  # Cho phép Alloy (namespace platform) scrape /actuator/prometheus
+  allowMonitoringFrom: platform
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []

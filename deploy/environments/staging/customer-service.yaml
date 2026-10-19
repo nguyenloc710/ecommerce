@@ -1,0 +1,41 @@
+# customer-service — môi trường staging. Tag ảnh do CI cập nhật.
+image:
+  repository: ghcr.io/your-org/ecommerce/customer-service
+  tag: "0000000"
+
+replicas: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 4
+
+pdb:
+  enabled: false
+
+env:
+  APP_ENV: staging
+  KEYCLOAK_ISSUER_URI: https://auth-staging.example.vn/realms/ecommerce
+  KEYCLOAK_JWK_SET_URI: http://keycloak-service:8080/realms/ecommerce/protocol/openid-connect/certs
+  TRACING_EXPORT_ENABLED: "true"
+  OTLP_TRACING_ENDPOINT: http://alloy.platform:4318/v1/traces
+  DB_URL: jdbc:postgresql://pg-rw:5432/customer_db
+  RABBITMQ_HOST: rabbitmq
+  KEYCLOAK_ADMIN_BASE_URL: http://keycloak-service:8080
+  KEYCLOAK_TOKEN_URI: http://keycloak-service:8080/realms/ecommerce/protocol/openid-connect/token
+
+# SealedSecret cung cấp DB_USERNAME/DB_PASSWORD, RABBITMQ_*, KEYCLOAK_CLIENT_SECRET...
+envFromSecrets:
+  - customer-service-secrets
+
+networkPolicy:
+  ingressFrom:
+    - gateway
+  ingressFromNamespaces: []

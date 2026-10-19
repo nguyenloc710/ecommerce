@@ -1,0 +1,109 @@
+server:
+  port: ${SERVER_PORT:8083}
+  shutdown: graceful
+
+spring:
+  application:
+    name: order-service
+  threads:
+    virtual:
+      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  messages:
+    basename: messages,common-messages
+    fallback-to-system-locale: false
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/order_db}
+    username: ${DB_USERNAME:orders}
+    password: ${DB_PASSWORD:orders}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:ecommerce}
+    password: ${RABBITMQ_PASSWORD:ecommerce}
+    listener:
+      simple:
+        observation-enabled: true
+    template:
+      observation-enabled: true
+  modulith:
+    events:
+      externalization:
+        enabled: true
+      republish-outstanding-events-on-restart: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # iss phải khớp URL public của Keycloak; JWKS lấy qua địa chỉ nội bộ khi chạy trong cluster
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/ecommerce}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/ecommerce/protocol/openid-connect/certs}
+          audiences: ecommerce-api
+      # Token client_credentials để gọi /internal/** của catalog-service
+      client:
+        registration:
+          keycloak-internal:
+            provider: keycloak
+            client-id: ${KEYCLOAK_CLIENT_ID:order-service}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:order-service-dev-secret}
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8180/realms/ecommerce/protocol/openid-connect/token}
+
+ecommerce:
+  security:
+    # Webhook cổng thanh toán và hãng vận chuyển: không có JWT, xác thực bằng chữ ký trong controller
+    public-paths:
+      - /webhooks/**
+  clients:
+    catalog:
+      base-url: ${CATALOG_BASE_URL:http://localhost:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,loggers
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+    export:
+      enabled: ${TRACING_EXPORT_ENABLED:false}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
+
+logging:
+  level:
+    vn.ecommerce: INFO
+  structured:
+    ecs:
+      service:
+        name: ${spring.application.name}
+        version: ${APP_VERSION:dev}
+        environment: ${APP_ENV:local}
+
+---
+# Trên Kubernetes: log JSON (ECS) ra stdout để Grafana Alloy thu về Loki
+spring:
+  config:
+    activate:
+      on-cloud-platform: kubernetes
+logging:
+  structured:
+    format:
+      console: ecs

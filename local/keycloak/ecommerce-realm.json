@@ -1,0 +1,178 @@
+{
+  "realm": "ecommerce",
+  "enabled": true,
+  "displayName": "Ecommerce",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "permanentLockout": false,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "ssoSessionIdleTimeoutRememberMe": 2592000,
+  "ssoSessionMaxLifespanRememberMe": 2592000,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "passwordPolicy": "length(8) and digits(1) and lowerCase(1) and notEmail(undefined) and passwordHistory(3)",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["vi", "en"],
+  "defaultLocale": "vi",
+  "eventsEnabled": true,
+  "eventsExpiration": 2592000,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@ecommerce.local",
+    "fromDisplayName": "Ecommerce"
+  },
+  "roles": {
+    "realm": [
+      { "name": "CUSTOMER", "description": "Khách hàng: mua hàng, xem đơn của mình, review" },
+      { "name": "STAFF", "description": "Nhân viên: quản lý sản phẩm, tồn kho, xử lý đơn" },
+      { "name": "ADMIN", "description": "Chủ shop: toàn quyền, cấu hình, voucher, quản lý nhân viên" },
+      { "name": "INTERNAL", "description": "Service account được gọi /internal/** giữa các service" },
+      {
+        "name": "default-roles-ecommerce",
+        "description": "Role mặc định khi tự đăng ký",
+        "composite": true,
+        "composites": { "realm": ["CUSTOMER", "offline_access", "uma_authorization"] }
+      }
+    ]
+  },
+  "defaultRole": { "name": "default-roles-ecommerce" },
+  "groups": [
+    { "name": "staff", "realmRoles": ["STAFF"] },
+    { "name": "admins", "realmRoles": ["ADMIN", "STAFF"] }
+  ],
+  "clients": [
+    {
+      "clientId": "storefront-web",
+      "name": "Storefront (Next.js + Auth.js)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "storefront-web-dev-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-ecommerce-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "ecommerce-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "realm-roles-flat",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "order-service",
+      "name": "order-service (client credentials)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "order-service-dev-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audience-ecommerce-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "ecommerce-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "realm-roles-flat",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "customer-service",
+      "name": "customer-service (Keycloak Admin API)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "customer-service-dev-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-order-service",
+      "enabled": true,
+      "serviceAccountClientId": "order-service",
+      "realmRoles": ["INTERNAL"]
+    },
+    {
+      "username": "service-account-customer-service",
+      "enabled": true,
+      "serviceAccountClientId": "customer-service",
+      "clientRoles": { "realm-management": ["view-users", "manage-users"] }
+    },
+    {
+      "username": "customer@example.com",
+      "email": "customer@example.com",
+      "firstName": "Khách",
+      "lastName": "Mẫu",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "Customer123", "temporary": false }],
+      "realmRoles": ["default-roles-ecommerce"]
+    },
+    {
+      "username": "admin@example.com",
+      "email": "admin@example.com",
+      "firstName": "Chủ",
+      "lastName": "Shop",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "Admin12345", "temporary": false }],
+      "realmRoles": ["default-roles-ecommerce"],
+      "groups": ["/admins"]
+    }
+  ]
+}

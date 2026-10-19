@@ -1,0 +1,72 @@
+# Hạ tầng cho dev local. Các service Spring Boot và Next.js chạy từ IDE / terminal.
+#   docker compose -f local/docker-compose.yml up -d
+name: ecommerce-local
+
+services:
+  postgres:
+    image: postgres:17.11
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Tạo database + user riêng cho từng service và Keycloak
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8.1.10-alpine
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:4.1.8-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ecommerce
+      RABBITMQ_DEFAULT_PASS: ecommerce
+    ports:
+      - "5672:5672"
+      - "15672:15672" # UI quản trị: http://localhost:15672
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_db
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HTTP_PORT: 8180
+      KC_HOSTNAME: http://localhost:8180
+      KC_HEALTH_ENABLED: "true"
+      KC_LOG_CONSOLE_OUTPUT: default
+    ports:
+      - "8180:8180" # Admin console: http://localhost:8180/admin (admin/admin)
+    volumes:
+      - ./keycloak/ecommerce-realm.json:/opt/keycloak/data/import/ecommerce-realm.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Hộp thư giả: Keycloak gửi mail xác thực/quên mật khẩu vào đây. UI: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.31.6
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  # Object storage S3 cho module media: thêm khi làm tới module này (MinIO hoặc Cloudflare R2 bucket dev).
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
