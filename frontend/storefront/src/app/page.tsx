@@ -3,9 +3,11 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { ProductCard } from "@/components/product/product-card";
 import { PlaceholderImage } from "@/components/ui/placeholder-image";
-import { categories, newArrivals } from "@/lib/mock-data";
+import { getCategoryTree, getNewArrivals, iconFor, leafCategories, toneFor } from "@/lib/catalog";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [newArrivals, tree] = await Promise.all([getNewArrivals(4), getCategoryTree()]);
+  const categories = leafCategories(tree, 6);
   return (
     <>
       <SiteHeader cartCount={0} />
@@ -103,7 +105,7 @@ export default function HomePage() {
           <div className="grid grid-cols-3 gap-3 lg:grid-cols-6 lg:gap-4">
             {categories.map((c) => (
               <Link key={c.slug} href={`/danh-muc/${c.slug}`} className="flex flex-col gap-2">
-                <PlaceholderImage tone={c.tone} icon={c.icon} iconSize={56} className="aspect-square" />
+                <PlaceholderImage tone={toneFor(c.slug)} icon={iconFor(c.slug)} iconSize={56} className="aspect-square" />
                 <span className="eyebrow text-[11px]">{c.name}</span>
               </Link>
             ))}

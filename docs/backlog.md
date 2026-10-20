@@ -51,7 +51,7 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 ## E5. Storefront (Next.js)
 
 - [ ] E5.1 Auth.js + Keycloak (BFF), middleware bảo vệ `/account`, `/admin`; helper gọi gateway kèm token từ server
-- [ ] E5.2 Trang chủ nối dữ liệu thật (danh mục, mới về); ISR 60s + revalidate on-demand
+- [x] E5.2 Trang chủ nối dữ liệu thật (danh mục, mới về); cache `use cache` 1 phút + `POST /api/revalidate` (làm sớm để demo C1)
 - [ ] E5.3 PLP: lưới, thanh lọc dính, facet, sắp xếp, xem thêm, URL state; mobile toggle 1/2 cột
 - [ ] E5.4 PDP: gallery, chọn màu/size, tồn kho, khắc tên, accordion, hoàn thiện bộ, review; mobile thanh dính đáy
 - [ ] E5.5 Giỏ hàng: Zustand cho khách vãng lai, ngăn kéo desktop, trang mobile, gộp giỏ khi đăng nhập

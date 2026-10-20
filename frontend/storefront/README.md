@@ -18,7 +18,11 @@ Tạo `.env.local` (không commit):
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
 | `NEXT_PUBLIC_SHOP_NAME` | `Tên shop` | Tên hiển thị ở logo, title, footer |
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080` | Gateway backend |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080` | Gateway backend (dùng ở trình duyệt và khi không có `API_BASE_URL`) |
+| `API_BASE_URL` | (trống) | Địa chỉ gateway nội bộ cho phía server (trên K8s: `http://gateway:8080`) |
+| `REVALIDATE_SECRET` | (trống) | Bí mật cho `POST /api/revalidate` (header `X-Revalidate-Secret`) làm mới cache catalog |
+
+Dữ liệu catalog trên trang chủ đọc từ gateway qua hàm `"use cache"` (`src/lib/catalog.ts`, `cacheLife("minutes")`, tag `catalog`); gateway không chạy thì tự dùng dữ liệu giả để build không gãy.
 
 Biến cho Auth.js (Keycloak) sẽ thêm ở task E5.1.
 
