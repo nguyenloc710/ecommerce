@@ -2,8 +2,9 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { ProductCard } from "@/components/product/product-card";
-import { PlaceholderImage } from "@/components/ui/placeholder-image";
+import { CoverImage } from "@/components/ui/cover-image";
 import { getCategoryTree, getNewArrivals, iconFor, leafCategories, toneFor } from "@/lib/catalog";
+import { SITE_IMAGES, categoryImage } from "@/lib/seed-images";
 
 export default async function HomePage() {
   const [newArrivals, tree] = await Promise.all([getNewArrivals(4), getCategoryTree()]);
@@ -13,20 +14,15 @@ export default async function HomePage() {
       <SiteHeader cartCount={0} />
       <main className="flex flex-col">
         {/* Hero tràn màn hình, chữ đè góc dưới trái */}
-        <section className="relative flex h-[520px] items-end bg-[#2b2a28] text-paper lg:h-[820px]">
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 100 100"
-            fill="none"
-            stroke="#fff"
-            strokeWidth="0.8"
-            className="absolute right-6 top-28 h-[150px] w-[150px] lg:right-[12%] lg:top-1/2 lg:h-[260px] lg:w-[260px] lg:-translate-y-1/2"
-          >
-            <circle cx="50" cy="58" r="26" />
-            <circle cx="50" cy="58" r="20" />
-            <path d="M40 32 50 22l10 10-10 8z" />
-          </svg>
-          <div className="pad relative flex max-w-[720px] flex-col gap-3 pb-7 lg:gap-5 lg:pb-18">
+        <CoverImage
+          src={SITE_IMAGES.hero}
+          alt="Bộ sưu tập Thu Đông 2026"
+          className="h-[520px] lg:h-[820px]"
+          sizes="100vw"
+          priority
+          overlay="bottom"
+        >
+          <div className="pad flex max-w-[720px] flex-col gap-3 pb-7 text-paper lg:gap-5 lg:pb-18">
             <span className="eyebrow">Bộ sưu tập Thu Đông 2026</span>
             <h1 className="font-display text-[44px] font-medium leading-[0.98] lg:text-[84px]">
               Lặng lẽ,
@@ -42,27 +38,27 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-        </section>
+        </CoverImage>
 
         {/* Hai ô chiến dịch */}
         <section className="pad grid grid-cols-2 gap-0.5 pt-0.5 lg:gap-4 lg:pt-4">
           <Link href="/danh-muc/thoi-trang" className="block">
-            <PlaceholderImage tone="sand" icon="shirt" iconSize={140} className="aspect-[4/5] !items-end !justify-start">
-              <div className="relative flex flex-col gap-2.5 p-3.5 lg:p-9">
+            <CoverImage src={SITE_IMAGES.campaignFashion} alt="Thời trang" className="aspect-[4/5]" sizes="50vw" overlay="bottom">
+              <div className="flex flex-col gap-2.5 p-3.5 text-paper lg:p-9">
                 <span className="eyebrow">Thời trang</span>
                 <span className="hidden font-display text-[40px] leading-[1.05] lg:block">Linen &amp; lụa cho ngày se lạnh</span>
                 <span className="eyebrow ul mt-1.5 self-start text-[9px] lg:text-[11px]">Xem bộ sưu tập</span>
               </div>
-            </PlaceholderImage>
+            </CoverImage>
           </Link>
           <Link href="/danh-muc/trang-suc" className="block">
-            <PlaceholderImage tone="stone" icon="necklace" iconSize={140} className="aspect-[4/5] !items-end !justify-start bg-[#e9e4dc]">
-              <div className="relative flex flex-col gap-2.5 p-3.5 lg:p-9">
+            <CoverImage src={SITE_IMAGES.campaignJewelry} alt="Trang sức" className="aspect-[4/5]" sizes="50vw" overlay="bottom">
+              <div className="flex flex-col gap-2.5 p-3.5 text-paper lg:p-9">
                 <span className="eyebrow">Trang sức</span>
                 <span className="hidden font-display text-[40px] leading-[1.05] lg:block">Bạc 925 chế tác thủ công</span>
                 <span className="eyebrow ul mt-1.5 self-start text-[9px] lg:text-[11px]">Xem bộ sưu tập</span>
               </div>
-            </PlaceholderImage>
+            </CoverImage>
           </Link>
         </section>
 
@@ -83,9 +79,7 @@ export default async function HomePage() {
 
         {/* Câu chuyện chế tác */}
         <section className="pad grid grid-cols-1 items-center gap-8 pt-16 lg:grid-cols-2 lg:gap-16 lg:pt-24">
-          <PlaceholderImage tone="ink" icon="necklace" iconSize={200} className="aspect-[4/5]">
-            <span className="absolute bottom-3 left-3.5 text-[10px] uppercase tracking-[0.14em] text-white/50">Ảnh xưởng chế tác</span>
-          </PlaceholderImage>
+          <CoverImage src={SITE_IMAGES.story} alt="Xưởng chế tác" className="aspect-[4/5]" sizes="(min-width: 1024px) 50vw, 100vw" />
           <div className="flex max-w-[480px] flex-col gap-5 lg:gap-6">
             <span className="eyebrow text-muted">Câu chuyện</span>
             <h2 className="font-display text-[34px] font-medium leading-[1.02] lg:text-[52px]">Mỗi chiếc nhẫn đi qua 14 bàn tay thợ</h2>
@@ -105,7 +99,15 @@ export default async function HomePage() {
           <div className="grid grid-cols-3 gap-3 lg:grid-cols-6 lg:gap-4">
             {categories.map((c) => (
               <Link key={c.slug} href={`/danh-muc/${c.slug}`} className="flex flex-col gap-2">
-                <PlaceholderImage tone={toneFor(c.slug)} icon={iconFor(c.slug)} iconSize={56} className="aspect-square" />
+                <CoverImage
+                  src={categoryImage(c.slug)}
+                  alt={c.name}
+                  className="aspect-square"
+                  sizes="(min-width: 1024px) 16vw, 33vw"
+                  tone={toneFor(c.slug)}
+                  icon={iconFor(c.slug)}
+                  iconSize={56}
+                />
                 <span className="eyebrow text-[11px]">{c.name}</span>
               </Link>
             ))}

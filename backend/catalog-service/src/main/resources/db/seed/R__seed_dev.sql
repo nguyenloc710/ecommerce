@@ -115,3 +115,30 @@ VALUES
     -- Nhẫn ngọc lục bảo
     ('40000000-0000-0000-0000-000000000c01', '30000000-0000-0000-0000-00000000000c', 'RNG-EMR-SL-6', '{"color":"Bạc","size":"6"}', 1250000, NULL, 3, 'ACTIVE', 1, now(), 'system', now(), 'system')
 ON CONFLICT (id) DO NOTHING;
+
+-- Ảnh mẫu (file tĩnh trong storefront/public/img/seed, nguồn Pexels; xem CREDITS.md ở đó). Thay bằng ảnh thật ở module media.
+INSERT INTO product_image (id, product_id, variant_id, url, alt, sort_order, created_at, created_by, updated_at, updated_by)
+VALUES
+    ('50000000-0000-0000-0000-000000000101', '30000000-0000-0000-0000-000000000001', NULL, '/img/seed/ao-so-mi-linen-oversize-1.jpg', 'Áo sơ mi linen oversize', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000102', '30000000-0000-0000-0000-000000000001', NULL, '/img/seed/ao-so-mi-linen-oversize-2.jpg', 'Áo sơ mi linen oversize - mặt sau', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000201', '30000000-0000-0000-0000-000000000002', NULL, '/img/seed/ao-thun-cotton-basic-1.jpg', 'Áo thun cotton basic', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000202', '30000000-0000-0000-0000-000000000002', NULL, '/img/seed/ao-thun-cotton-basic-2.jpg', 'Áo thun cotton basic - chi tiết', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000301', '30000000-0000-0000-0000-000000000003', NULL, '/img/seed/vay-midi-lua-co-vuong-1.jpg', 'Váy midi lụa cổ vuông', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000302', '30000000-0000-0000-0000-000000000003', NULL, '/img/seed/vay-midi-lua-co-vuong-2.jpg', 'Váy midi lụa cổ vuông - toàn thân', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000401', '30000000-0000-0000-0000-000000000004', NULL, '/img/seed/quan-ong-rong-dang-suong-1.jpg', 'Quần ống rộng dáng suông', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000402', '30000000-0000-0000-0000-000000000004', NULL, '/img/seed/quan-ong-rong-dang-suong-2.jpg', 'Quần ống rộng dáng suông - phối đồ', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000501', '30000000-0000-0000-0000-000000000005', NULL, '/img/seed/tui-deo-cheo-da-bo-1.jpg', 'Túi đeo chéo da bò', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000601', '30000000-0000-0000-0000-000000000006', NULL, '/img/seed/that-lung-da-ban-nho-1.jpg', 'Thắt lưng da bản nhỏ', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000701', '30000000-0000-0000-0000-000000000007', NULL, '/img/seed/nhan-bac-dinh-da-moissanite-5-ly-1.jpg', 'Nhẫn bạc đính đá moissanite 5 ly', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000702', '30000000-0000-0000-0000-000000000007', NULL, '/img/seed/nhan-bac-dinh-da-moissanite-5-ly-2.jpg', 'Nhẫn bạc đính đá moissanite - cận đá', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000801', '30000000-0000-0000-0000-000000000008', NULL, '/img/seed/nhan-bac-tron-ban-2mm-1.jpg', 'Nhẫn bạc trơn bản 2 mm', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000802', '30000000-0000-0000-0000-000000000008', NULL, '/img/seed/nhan-bac-tron-ban-2mm-2.jpg', 'Nhẫn bạc trơn - cặp', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000901', '30000000-0000-0000-0000-000000000009', NULL, '/img/seed/nhan-doi-bac-khac-ten-1.jpg', 'Nhẫn đôi bạc khắc tên', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000902', '30000000-0000-0000-0000-000000000009', NULL, '/img/seed/nhan-doi-bac-khac-ten-2.jpg', 'Nhẫn đôi bạc khắc tên - trên tay', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000a01', '30000000-0000-0000-0000-00000000000a', NULL, '/img/seed/day-chuyen-bac-mat-da-4-ly-1.jpg', 'Dây chuyền bạc mặt đá 4 ly', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000a02', '30000000-0000-0000-0000-00000000000a', NULL, '/img/seed/day-chuyen-bac-mat-da-4-ly-2.jpg', 'Dây chuyền bạc mặt đá - cận mặt', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000b01', '30000000-0000-0000-0000-00000000000b', NULL, '/img/seed/khuyen-tai-ngoc-trai-nuoc-ngot-1.jpg', 'Khuyên tai ngọc trai nước ngọt', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000b02', '30000000-0000-0000-0000-00000000000b', NULL, '/img/seed/khuyen-tai-ngoc-trai-nuoc-ngot-2.jpg', 'Khuyên tai ngọc trai - chi tiết', 1, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000c01', '30000000-0000-0000-0000-00000000000c', NULL, '/img/seed/nhan-bac-dinh-ngoc-luc-bao-1.jpg', 'Nhẫn bạc đính ngọc lục bảo', 0, now(), 'system', now(), 'system'),
+    ('50000000-0000-0000-0000-000000000c02', '30000000-0000-0000-0000-00000000000c', NULL, '/img/seed/nhan-bac-dinh-ngoc-luc-bao-2.jpg', 'Nhẫn bạc đính ngọc lục bảo - mặt đá', 1, now(), 'system', now(), 'system')
+ON CONFLICT (id) DO NOTHING;

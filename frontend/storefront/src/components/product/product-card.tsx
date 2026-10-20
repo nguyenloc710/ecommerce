@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatVnd } from "@/lib/format";
-import { PlaceholderImage, type IconName, type Tone } from "@/components/ui/placeholder-image";
+import { CoverImage } from "@/components/ui/cover-image";
+import type { IconName, Tone } from "@/components/ui/placeholder-image";
 
 export type ProductCardData = {
   slug: string;
@@ -25,16 +26,24 @@ const labelClass = {
 
 export function ProductCard({ product }: { product: ProductCardData }) {
   const href = `/san-pham/${product.slug}`;
+  const label = product.label ? (
+    <span className={`eyebrow absolute left-3 top-3 z-20 text-[10px] ${product.imageUrl ? "bg-paper/85 px-1.5 py-0.5" : ""} ${labelClass[product.labelTone ?? "default"]}`}>
+      {product.label}
+    </span>
+  ) : null;
   return (
     <div className={`flex min-w-0 flex-col gap-2 ${product.soldOut ? "opacity-55" : ""}`}>
       <Link href={href} className="block">
-        <PlaceholderImage tone={product.tone} icon={product.icon} className="aspect-[3/4]">
-          {product.label ? (
-            <span className={`eyebrow absolute left-3 top-3 text-[10px] ${labelClass[product.labelTone ?? "default"]}`}>
-              {product.label}
-            </span>
-          ) : null}
-        </PlaceholderImage>
+        <CoverImage
+          src={product.imageUrl}
+          alt={product.name}
+          className="aspect-[3/4]"
+          sizes="(min-width: 1024px) 25vw, 50vw"
+          tone={product.tone}
+          icon={product.icon}
+        >
+          {label}
+        </CoverImage>
       </Link>
       <Link href={href} className="text-[13px] hover:opacity-70">
         {product.name}

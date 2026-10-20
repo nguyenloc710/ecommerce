@@ -35,6 +35,7 @@ Nguồn mặc định khi code tự động. Gặp điểm mơ hồ không có �
 | UI-14 | Ảnh | `next/image`, placeholder tông `stone/sand/taupe` khi chưa có ảnh; CDN R2 |
 | UI-15 | Tiền | `Intl.NumberFormat("vi-VN")` + "₫", ví dụ `1.290.000₫` |
 | UI-16 | Tên shop | Chưa có, dùng placeholder "Tên shop" trong code qua biến `NEXT_PUBLIC_SHOP_NAME` |
+| UI-17 | Ảnh mẫu | Ảnh Pexels (miễn phí) để tĩnh trong `frontend/storefront/public/img/seed/`, URL `/img/seed/...` lưu trong `product_image` của seed dev; nguồn ghi ở `CREDITS.md`. Ảnh thật sẽ qua module media (R2) với URL tuyệt đối, FE khai báo `images.remotePatterns` khi đó |
 
 ## Nghiệp vụ
 
