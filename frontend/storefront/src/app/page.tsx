@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/site/site-header";
-import { SiteFooter } from "@/components/site/site-footer";
 import { ProductCard } from "@/components/product/product-card";
 import { CoverImage } from "@/components/ui/cover-image";
 import { getCategoryTree, getNewArrivals, iconFor, leafCategories, toneFor } from "@/lib/catalog";
@@ -11,7 +9,6 @@ export default async function HomePage() {
   const categories = leafCategories(tree, 6);
   return (
     <>
-      <SiteHeader cartCount={0} />
       <main className="flex flex-col">
         {/* Hero tràn màn hình, chữ đè góc dưới trái */}
         <CoverImage
@@ -143,7 +140,6 @@ export default async function HomePage() {
           ))}
         </section>
       </main>
-      <SiteFooter />
     </>
   );
 }

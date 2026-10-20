@@ -1,34 +1,21 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 import type { ProductCardData } from "@/components/product/product-card";
-import type { IconName, Tone } from "@/components/ui/placeholder-image";
 import { categories as mockCategories, newArrivals as mockNewArrivals } from "@/lib/mock-data";
+import { buildListingQuery, type ListingParams } from "@/lib/listing-params";
+import {
+  CATALOG_CACHE_TAG,
+  toCardData,
+  type Availability,
+  type CategoryTreeNode,
+  type FacetsView,
+  type PageView,
+  type ProductCardView,
+  type ProductDetail,
+} from "@/lib/catalog-shared";
 
-// ---- Kiểu dữ liệu theo hợp đồng catalog-service ----
-
-export type CategoryTreeNode = {
-  id: string;
-  name: string;
-  slug: string;
-  sortOrder: number;
-  children: CategoryTreeNode[];
-};
-
-export type ProductCardView = {
-  id: string;
-  slug: string;
-  name: string;
-  price: number | null;
-  compareAtPrice: number | null;
-  imageUrl: string | null;
-  colors: string[];
-  label: string | null;
-};
-
-export type PageView<T> = { items: T[]; page: number; size: number; total: number; hasNext: boolean };
-
-/** Tag cache dùng chung cho dữ liệu catalog; admin sửa sản phẩm thì gọi /api/revalidate để làm mới. */
-export const CATALOG_CACHE_TAG = "catalog";
+// Chỉ import file này từ Server Component (dùng next/cache). Client dùng catalog-shared.
+export * from "@/lib/catalog-shared";
 
 // ---- Dữ liệu có cache (nằm trong static shell, làm mới theo cacheLife hoặc on-demand) ----
 
@@ -57,84 +44,69 @@ export async function getNewArrivals(size = 4): Promise<ProductCardData[]> {
   }
 }
 
-// ---- Chuyển đổi sang dữ liệu hiển thị ----
-
-/** Mã nhãn từ API (P-06) → chữ hiển thị. */
-const LABEL_TEXT: Record<string, { text: string; tone: ProductCardData["labelTone"] }> = {
-  NEW: { text: "Mới", tone: "default" },
-  BESTSELLER: { text: "Bán chạy", tone: "default" },
-  SOLD_OUT: { text: "Hết hàng", tone: "default" },
-};
-
-/** Tên màu trong option_values → màu chấm trên thẻ (UI-07). Tên lạ dùng xám trung tính. */
-const COLOR_HEX: Record<string, string> = {
-  "đen": "#111111",
-  "trắng": "#f3efe8",
-  "be": "#cfc6ba",
-  "kem": "#efe9dd",
-  "nâu": "#6b4a2b",
-  "xám": "#8a8a8a",
-  "xanh rêu": "#2f3a2f",
-  "xanh navy": "#1f2a44",
-  "hồng đất": "#d8c3b8",
-  "đỏ": "#8c2b2b",
-  "bạc": "#d7d7d7",
-  "mạ vàng": "#d9b65c",
-  "vàng": "#d9b65c",
-  "vàng hồng": "#d9a08f",
-};
-
-export function colorHex(name: string): string {
-  return COLOR_HEX[name.trim().toLowerCase()] ?? "#c9c4bb";
+/** Danh sách theo bộ lọc; mỗi tổ hợp tham số là một mục cache riêng. Ném ApiError 404 khi slug danh mục sai. */
+export async function listProducts(params: ListingParams): Promise<PageView<ProductCardView>> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(CATALOG_CACHE_TAG);
+  return apiFetch<PageView<ProductCardView>>(`/api/products${buildListingQuery(params)}`);
 }
 
-export function toCardData(view: ProductCardView): ProductCardData {
-  const label = view.label ? LABEL_TEXT[view.label] : undefined;
-  return {
-    slug: view.slug,
-    name: view.name,
-    price: view.price ?? 0,
-    compareAtPrice: view.compareAtPrice ?? undefined,
-    imageUrl: view.imageUrl ?? undefined,
-    colors: view.colors.map(colorHex),
-    label: label?.text,
-    labelTone: label?.tone,
-    tone: toneFor(view.slug),
-    icon: iconFor(view.slug),
-    soldOut: view.label === "SOLD_OUT",
-  };
+export async function getFacets(category?: string, brand?: string, q?: string): Promise<FacetsView> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(CATALOG_CACHE_TAG);
+  const qs = new URLSearchParams();
+  if (category) qs.set("category", category);
+  if (brand) qs.set("brand", brand);
+  if (q) qs.set("q", q);
+  const query = qs.toString();
+  try {
+    return await apiFetch<FacetsView>(`/api/products/facets${query ? `?${query}` : ""}`);
+  } catch (error) {
+    console.warn("[catalog] không lấy được facet:", (error as Error).message);
+    return { options: [], attributes: [], priceMin: null, priceMax: null };
+  }
 }
 
-/** Khi chưa có ảnh thật: chọn tông và nét vẽ placeholder theo slug để lưới không đơn điệu. */
-export function iconFor(slug: string): IconName | undefined {
-  if (/nhan/.test(slug)) return "ring";
-  if (/day-chuyen|vong-co/.test(slug)) return "necklace";
-  if (/khuyen-tai|bong-tai/.test(slug)) return "earring";
-  if (/tui/.test(slug)) return "bag";
-  if (/vay|dam|quan/.test(slug)) return "dress";
-  if (/ao/.test(slug)) return "shirt";
-  return undefined;
+/** Chi tiết sản phẩm; null khi không tồn tại hoặc ngừng bán (để trang gọi notFound()). */
+export async function getProduct(slug: string): Promise<ProductDetail | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(CATALOG_CACHE_TAG, `product:${slug}`);
+  try {
+    return await apiFetch<ProductDetail>(`/api/products/${encodeURIComponent(slug)}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
 }
 
-const TONES: Tone[] = ["stone", "sand", "bone", "taupe"];
-
-export function toneFor(slug: string): Tone {
-  let hash = 0;
-  for (const ch of slug) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return TONES[hash % TONES.length];
+/** Sản phẩm cùng danh mục cho khối "Hoàn thiện bộ". */
+export async function getRelatedProducts(categorySlug: string, excludeSlug: string, size = 4): Promise<ProductCardData[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(CATALOG_CACHE_TAG);
+  try {
+    const page = await apiFetch<PageView<ProductCardView>>(`/api/products?category=${encodeURIComponent(categorySlug)}&size=${size + 1}`);
+    return page.items.filter((p) => p.slug !== excludeSlug).slice(0, size).map(toCardData);
+  } catch (error) {
+    console.warn("[catalog] không lấy được sản phẩm liên quan:", (error as Error).message);
+    return [];
+  }
 }
 
-/** Danh mục lá để hiển thị ô "Mua theo danh mục" (tối đa 6). */
-export function leafCategories(tree: CategoryTreeNode[], limit = 6): { slug: string; name: string }[] {
-  const leaves: { slug: string; name: string }[] = [];
-  const walk = (nodes: CategoryTreeNode[]) => {
-    for (const node of nodes) {
-      if (node.children.length === 0) leaves.push({ slug: node.slug, name: node.name });
-      else walk(node.children);
-    }
-  };
-  walk(tree);
-  return leaves.slice(0, limit);
+/** Tồn kho hiện tại: KHÔNG cache, đọc lúc request (gọi trong Suspense). */
+export async function getAvailability(skuIds: string[]): Promise<Record<string, Availability>> {
+  if (skuIds.length === 0) return {};
+  try {
+    // Timeout dài hơn mặc định: lần gọi đầu sau khi backend khởi động có thể chậm (JIT), mà đây là dữ liệu không cache
+    const list = await apiFetch<Availability[]>(`/api/inventory/availability?skuIds=${skuIds.join(",")}`, { cache: "no-store", timeoutMs: 10_000 });
+    return Object.fromEntries(list.map((a) => [a.skuId, a]));
+  } catch (error) {
+    console.warn("[catalog] không lấy được tồn kho:", (error as Error).message);
+    return {};
+  }
 }
 
 function mockCategoryTree(): CategoryTreeNode[] {

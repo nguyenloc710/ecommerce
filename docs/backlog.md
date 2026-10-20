@@ -52,12 +52,12 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 
 - [ ] E5.1 Auth.js + Keycloak (BFF), middleware bảo vệ `/account`, `/admin`; helper gọi gateway kèm token từ server
 - [x] E5.2 Trang chủ nối dữ liệu thật (danh mục, mới về); cache `use cache` 1 phút + `POST /api/revalidate` (làm sớm để demo C1)
-- [ ] E5.3 PLP: lưới, thanh lọc dính, facet, sắp xếp, xem thêm, URL state; mobile toggle 1/2 cột
-- [ ] E5.4 PDP: gallery, chọn màu/size, tồn kho, khắc tên, accordion, hoàn thiện bộ, review; mobile thanh dính đáy
-- [ ] E5.5 Giỏ hàng: Zustand cho khách vãng lai, ngăn kéo desktop, trang mobile, gộp giỏ khi đăng nhập
+- [x] E5.3 PLP: `/danh-muc/[slug]`, `/tim-kiem`, `/moi-ve`, `/sale`; lưới, thanh lọc dính, facet, sắp xếp, xem thêm, URL state; toggle mật độ lưới
+- [x] E5.4 PDP: `/san-pham/[slug]`: gallery, chọn màu/size theo tồn kho (Suspense, không cache), khắc tên cho trang sức, accordion, sản phẩm liên quan; review là placeholder tới E7.1. Chưa có thanh dính đáy mobile
+- [ ] E5.5 Giỏ hàng: ~~Zustand cho khách vãng lai~~ (đã có store persist + trang `/gio-hang`), còn: ngăn kéo desktop, gộp giỏ khi đăng nhập, kiểm tra lại giá/tồn kho từ server
 - [ ] E5.6 Thanh toán: form địa chỉ 3 cấp, vận chuyển, thanh toán, voucher, đặt hàng, trang thành công, trang đơn của tôi
 - [ ] E5.7 Admin `/admin`: đăng nhập STAFF, danh sách đơn theo tab, chi tiết đơn, đổi trạng thái; sản phẩm CRUD cơ bản; tồn kho
-- [ ] E5.8 SEO: metadata, sitemap, robots, structured data Product; Lighthouse mobile ≥ 85
+- [ ] E5.8 SEO: metadata, sitemap, robots, structured data Product; Lighthouse mobile ≥ 85. Lưu ý: với Cache Components, `notFound()` trong Suspense trả HTTP 200 + `noindex` (shell đã gửi); cân nhắc `generateStaticParams` cho slug đã biết hoặc kiểm tra tồn tại trước khi stream để trả 404 thật
 
 ⏸ **CHECKPOINT C3 (MVP)**: mua hàng end-to-end trên trình duyệt từ trang chủ tới đơn thành công, admin xử lý đơn
 

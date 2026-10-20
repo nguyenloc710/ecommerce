@@ -21,6 +21,7 @@ Tạo `.env.local` (không commit):
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080` | Gateway backend (dùng ở trình duyệt và khi không có `API_BASE_URL`) |
 | `API_BASE_URL` | (trống) | Địa chỉ gateway nội bộ cho phía server (trên K8s: `http://gateway:8080`) |
 | `REVALIDATE_SECRET` | (trống) | Bí mật cho `POST /api/revalidate` (header `X-Revalidate-Secret`) làm mới cache catalog |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | URL public của site (metadataBase cho Open Graph, sitemap) |
 
 Dữ liệu catalog trên trang chủ đọc từ gateway qua hàm `"use cache"` (`src/lib/catalog.ts`, `cacheLife("minutes")`, tag `catalog`); gateway không chạy thì tự dùng dữ liệu giả để build không gãy.
 
