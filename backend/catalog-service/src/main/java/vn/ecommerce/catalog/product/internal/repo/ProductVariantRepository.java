@@ -2,6 +2,7 @@ package vn.ecommerce.catalog.product.internal.repo;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +21,12 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     List<VariantRow> findActiveRowsByProductIdIn(@Param("productIds") Collection<UUID> productIds);
 
     List<ProductVariant> findByProductIdAndStatusOrderBySortOrderAsc(UUID productId, VariantStatus status);
+
+    List<ProductVariant> findByProductIdOrderBySortOrderAsc(UUID productId);
+
+    Optional<ProductVariant> findByIdAndProductId(UUID id, UUID productId);
+
+    boolean existsBySkuCode(String skuCode);
+
+    boolean existsBySkuCodeAndIdNot(String skuCode, UUID id);
 }

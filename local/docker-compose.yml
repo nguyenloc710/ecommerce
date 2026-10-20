@@ -4,7 +4,8 @@ name: ecommerce-local
 
 services:
   postgres:
-    image: postgres:17.11
+    # Dùng mirror ECR Public vì Docker Hub tải rất chậm từ mạng dev
+    image: public.ecr.aws/docker/library/postgres:17.11
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -21,12 +22,12 @@ services:
       retries: 20
 
   valkey:
-    image: valkey/valkey:8.1.10-alpine
+    image: public.ecr.aws/valkey/valkey:8.1.10-alpine
     ports:
       - "6379:6379"
 
   rabbitmq:
-    image: rabbitmq:4.1.8-management-alpine
+    image: public.ecr.aws/docker/library/rabbitmq:4.1.8-management-alpine
     environment:
       RABBITMQ_DEFAULT_USER: ecommerce
       RABBITMQ_DEFAULT_PASS: ecommerce
@@ -60,7 +61,7 @@ services:
 
   # Hộp thư giả: Keycloak gửi mail xác thực/quên mật khẩu vào đây. UI: http://localhost:8025
   mailpit:
-    image: axllent/mailpit:v1.31.6
+    image: ghcr.io/axllent/mailpit:v1.31.6
     ports:
       - "1025:1025"
       - "8025:8025"

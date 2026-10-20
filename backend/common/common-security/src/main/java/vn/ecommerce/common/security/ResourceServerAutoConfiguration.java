@@ -1,9 +1,11 @@
 package vn.ecommerce.common.security;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -13,6 +15,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Security chain mặc định cho service servlet: stateless, chỉ nhận Bearer JWT của Keycloak.
@@ -22,7 +25,8 @@ import org.springframework.security.web.SecurityFilterChain;
  *   <li>{@code /api/admin/**}: {@link Roles#STAFF} hoặc {@link Roles#ADMIN}.</li>
  *   <li>Còn lại: phải đăng nhập, trừ các path khai báo trong {@link SecurityProperties}.</li>
  * </ul>
- * Issuer, JWKS và audience cấu hình qua {@code spring.security.oauth2.resourceserver.jwt.*}.
+ * Lỗi 401/403 trả body {@code ErrorResponse} như controller. Issuer, JWKS và audience cấu hình qua
+ * {@code spring.security.oauth2.resourceserver.jwt.*}.
  */
 // Chạy trước các auto-config tạo SecurityFilterChain mặc định của Boot để chain này được dùng.
 @AutoConfiguration(beforeName = {
@@ -53,10 +57,19 @@ public class ResourceServerAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
+    SecurityErrorWriter securityErrorWriter(ObjectProvider<JsonMapper> jsonMapper, MessageSource messageSource) {
+        // Dùng JsonMapper do Boot cấu hình (ngày giờ ISO-8601); không có thì tạo mặc định
+        return new SecurityErrorWriter(jsonMapper.getIfAvailable(() -> JsonMapper.builder().build()), messageSource);
+    }
+
+    @Bean
     @ConditionalOnMissingBean(SecurityFilterChain.class)
     SecurityFilterChain resourceServerFilterChain(HttpSecurity http, SecurityProperties properties,
-                                                  JwtAuthenticationConverter jwtAuthenticationConverter)
-            throws Exception {
+                                                  JwtAuthenticationConverter jwtAuthenticationConverter,
+                                                  SecurityErrorWriter errorWriter) throws Exception {
+        JsonAuthenticationEntryPoint entryPoint = new JsonAuthenticationEntryPoint(errorWriter);
+        JsonAccessDeniedHandler accessDenied = new JsonAccessDeniedHandler(errorWriter);
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -68,7 +81,11 @@ public class ResourceServerAutoConfiguration {
                     auth.requestMatchers("/api/admin/**").hasAnyRole(Roles.STAFF, Roles.ADMIN);
                     auth.anyRequest().authenticated();
                 })
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDenied))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(entryPoint)
+                        .accessDeniedHandler(accessDenied)
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
         return http.build();
     }
 }

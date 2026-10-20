@@ -17,4 +17,6 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, UUID
             order by i.product.id, i.sortOrder
             """)
     List<ImageRow> findRowsByProductIdIn(@Param("productIds") Collection<UUID> productIds);
+
+    List<ProductImage> findByProductIdOrderBySortOrderAsc(UUID productId);
 }

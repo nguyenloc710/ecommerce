@@ -15,6 +15,11 @@
     <description>Resource server dùng JWT của Keycloak: chuyển role, CurrentUser, security chain mặc định</description>
 
     <dependencies>
+        <!-- Dùng ErrorResponse/CommonErrorKeys để lỗi 401/403 từ security filter có cùng định dạng với controller -->
+        <dependency>
+            <groupId>vn.ecommerce</groupId>
+            <artifactId>common-web</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>

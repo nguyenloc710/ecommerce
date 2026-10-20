@@ -11,4 +11,8 @@ public interface BrandRepository extends JpaRepository<Brand, UUID> {
 
     @Query("select b.id from Brand b where b.slug = :slug")
     Optional<UUID> findIdBySlug(@Param("slug") String slug);
+
+    boolean existsBySlug(String slug);
+
+    boolean existsBySlugAndIdNot(String slug, UUID id);
 }
