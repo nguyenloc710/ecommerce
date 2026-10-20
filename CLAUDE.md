@@ -90,6 +90,8 @@ Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-sta
 - Realm `ecommerce`. Service kiểm tra `iss` theo URL public (`KEYCLOAK_ISSUER_URI`), nhưng tải JWKS qua địa chỉ nội bộ (`KEYCLOAK_JWK_SET_URI`); audience bắt buộc là `ecommerce-api`.
 - `CurrentUser.requireId()` trả `sub` của Keycloak, dùng làm `customerId` ở mọi service. Không nhận id người dùng từ request body.
 - order-service (gọi catalog `/internal`) và customer-service (Keycloak Admin API) có registration OAuth2 client_credentials trong `application.yml`.
+- customer-service: `customer_profile.id` = `sub` Keycloak (`AuditableEntity.assignId`), hồ sơ tạo JIT ở `ProfileApi.ensureCurrentProfile()`; module khác (address, wishlist, staffadmin) gọi `ProfileApi`, không đụng repository của profile. Keycloak Admin API chỉ đi qua `KeycloakAdminGateway` (impl `KeycloakAdminRestClient`, bean `RestClient` tên `keycloakAdminHttpClient` có `OAuth2ClientHttpRequestInterceptor`); Boot 4 cần thêm `spring-boot-starter-restclient` mới có bean `RestClient.Builder`. Dữ liệu tham chiếu tỉnh/phường nằm ở `db/reference/R__admin_divisions.sql` (Flyway `locations` gồm cả `classpath:db/reference`), sinh lại bằng script scratchpad `divisions-to-sql.mjs`, mã zero-pad theo GSO (B-13).
+- `PageResponse` (common-web, không phụ thuộc Spring Data) là kiểu phân trang chung cho service mới; catalog vẫn dùng `PageView` riêng của module product.
 - Realm dev ở `local/keycloak/ecommerce-realm.json`; client secret trong đó chỉ dùng cho dev.
 
 ### Dữ liệu và event

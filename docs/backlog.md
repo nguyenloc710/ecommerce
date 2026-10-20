@@ -28,10 +28,10 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 
 ## E2. customer-service
 
-- [ ] E2.1 Module `profile`: JIT tạo hồ sơ từ JWT lần đầu, `GET/PUT /api/customers/me`, event `customer.created.v1`
-- [ ] E2.2 Module `address`: CRUD sổ địa chỉ, địa chỉ mặc định, dữ liệu tỉnh/quận/phường (bảng tĩnh seed)
-- [ ] E2.3 Module `wishlist`: thêm/xóa/list theo SKU
-- [ ] E2.4 Module `staffadmin`: adapter `KeycloakAdminGateway` (+ `Mock` cho test), `GET /api/admin/customers` (tìm, khóa/mở), `POST /api/admin/staff` tạo nhân viên vào group `staff`
+- [x] E2.1 Module `profile`: JIT tạo hồ sơ từ JWT lần đầu, `GET/PUT /api/customers/me`, event `customer.created.v1`; admin `GET /api/admin/customers[/{id}]` (tìm theo email/tên/SĐT)
+- [x] E2.2 Module `address`: CRUD sổ địa chỉ (xóa mềm, 1 mặc định/khách, tối đa `ecommerce.address.max-per-customer`), bảng `admin_division` 2 cấp (34 tỉnh / 3.321 phường, Flyway `db/reference/R__admin_divisions.sql`, mã GSO zero-pad), `GET /api/divisions/provinces[/{code}/wards]` công khai, `GET /internal/customers/{id}/addresses/{addressId}` cho order-service
+- [x] E2.3 Module `wishlist`: `GET/PUT/DELETE /api/customers/me/wishlist[/{skuId}]`, idempotent, xóa cứng; không gọi catalog kiểm tra SKU (storefront ẩn mục không còn bán)
+- [x] E2.4 Module `staffadmin`: adapter `KeycloakAdminGateway` (RestClient + client_credentials, mock trong test), `POST /api/admin/customers/{id}/lock|unlock` (STAFF/ADMIN; Keycloak enabled=false + logout mọi phiên + `admin_audit_log`), `GET/POST /api/admin/staff`, `POST /api/admin/staff/{id}/enable|disable` (chỉ ADMIN; tạo user vào group `staff`, mật khẩu tạm bắt đổi). Chưa smoke test thật với Keycloak Admin API → làm ở E5.7 admin UI
 
 ## E3. order-service
 

@@ -32,7 +32,7 @@ public class GatewaySecurityConfig {
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers("/actuator/**").permitAll()
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                        .pathMatchers(HttpMethod.GET,
+                        .pathMatchers(HttpMethod.GET, "/api/divisions/**",
                                 "/api/products/**", "/api/categories/**", "/api/brands/**", "/api/reviews/**", "/api/inventory/**")
                         .permitAll()
                         // Webhook đối tác: không có JWT, order-service kiểm tra chữ ký

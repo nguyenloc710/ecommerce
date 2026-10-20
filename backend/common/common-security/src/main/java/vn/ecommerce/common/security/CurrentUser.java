@@ -23,7 +23,16 @@ public class CurrentUser {
     }
 
     public Optional<String> email() {
-        return jwt().map(token -> token.getClaimAsString("email"));
+        return claim("email");
+    }
+
+    /** Tên hiển thị: claim {@code name}, không có thì {@code preferred_username}. */
+    public Optional<String> displayName() {
+        return claim("name").or(() -> claim("preferred_username"));
+    }
+
+    public Optional<String> claim(String name) {
+        return jwt().map(token -> token.getClaimAsString(name)).filter(v -> v != null && !v.isBlank());
     }
 
     public boolean hasRole(String role) {

@@ -37,7 +37,7 @@ spring:
             - id: customer
               uri: ${CUSTOMER_SERVICE_URL:http://localhost:8091}
               predicates:
-                - Path=/api/customers/**,/api/admin/customers/**,/api/admin/staff/**
+                - Path=/api/customers/**,/api/divisions/**,/api/admin/customers/**,/api/admin/staff/**
             - id: catalog
               uri: ${CATALOG_SERVICE_URL:http://localhost:8092}
               predicates:

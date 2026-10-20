@@ -53,3 +53,6 @@ Nguồn mặc định khi code tự động. Gặp điểm mơ hồ không có �
 | B-10 | Review | Chỉ khách có đơn `DELIVERED`/`COMPLETED` chứa SKU đó; duyệt tay trước khi hiện |
 | B-11 | Admin role | `STAFF` không xem báo cáo doanh thu, không sửa voucher, không quản lý nhân viên; `ADMIN` toàn quyền |
 | B-12 | Thông báo | Email qua SMTP (Mailpit local, Brevo prod); Zalo ZNS/SMS giai đoạn 3 |
+| B-13 | Đơn vị hành chính | 2 cấp tỉnh/phường theo sắp xếp 2025 (34 tỉnh, 3.321 phường). Mã theo chuẩn GSO zero-pad: tỉnh 2 chữ số (`01`), phường 5 chữ số (`00004`). Địa chỉ lưu kèm snapshot tên tỉnh/phường. Nguồn provinces.open-api.vn v2, nạp bằng Flyway repeatable (chỉ thêm/cập nhật, không xóa) |
+| B-14 | Khóa khách hàng | Gọi Keycloak Admin API trong cùng transaction DB (Keycloak lỗi → rollback, trả 502 `staffadmin.keycloak-unavailable`); khóa = `enabled=false` + logout mọi phiên + `customer_profile.status=LOCKED` + `admin_audit_log`; không tự khóa chính mình |
+| B-15 | Địa chỉ khi checkout | order-service không nhận địa chỉ từ client mà gọi `GET /internal/customers/{id}/addresses/{addressId}` (role INTERNAL) rồi snapshot JSONB vào đơn; khách vãng lai nhập địa chỉ trực tiếp, validate tỉnh/phường qua `/api/divisions` |

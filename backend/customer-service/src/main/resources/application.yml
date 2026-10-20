@@ -5,6 +5,10 @@ server:
 spring:
   application:
     name: customer-service
+  http:
+    clients:
+      connect-timeout: 3s
+      read-timeout: 5s
   threads:
     virtual:
       enabled: true
@@ -23,6 +27,8 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+    # db/reference: dữ liệu tham chiếu (tỉnh/phường) nạp ở mọi môi trường
+    locations: classpath:db/migration,classpath:db/reference
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -59,11 +65,18 @@ spring:
             token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8180/realms/ecommerce/protocol/openid-connect/token}
 
 ecommerce:
+  security:
+    public-get-paths:
+      - /api/divisions/**
+  address:
+    max-per-customer: 10
   clients:
     keycloak-admin:
       # Admin API: <base-url>/admin/realms/<realm>/...
       base-url: ${KEYCLOAK_ADMIN_BASE_URL:http://localhost:8180}
       realm: ecommerce
+      staff-group: staff
+      registration-id: keycloak-admin
 
 management:
   endpoints:

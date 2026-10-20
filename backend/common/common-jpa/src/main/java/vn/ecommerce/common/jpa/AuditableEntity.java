@@ -51,4 +51,9 @@ public abstract class AuditableEntity {
     @Setter(AccessLevel.PUBLIC)
     @Column(nullable = false)
     private long version;
+
+    /** Dùng khi id là khóa tự nhiên có sẵn (ví dụ {@code sub} của Keycloak làm id hồ sơ khách). Gọi trong constructor. */
+    protected void assignId(UUID id) {
+        this.id = id;
+    }
 }

@@ -223,8 +223,8 @@ Cloudflare (DNS, CDN, WAF, chống DDoS — gói Free)
 - Gọi service khác: dùng `OAuth2AuthorizedClientManager` (client credentials) gắn token vào `RestClient`; token được cache tới khi gần hết hạn.
 
 ### 7.3. customer-service
-- Bảng chính: `customer_profile (id = keycloak sub, email, full_name, phone, birthday, gender, created_at, version)`, `address`, `wishlist_item`.
-- API: `/api/customers/me`, `/api/customers/me/addresses`, `/api/customers/me/wishlist`; admin: `/api/admin/customers`, `/api/admin/staff`.
+- Bảng chính: `customer_profile (id = keycloak sub, email, full_name, phone, birthday, gender, status, created_at, version)`, `address` (xóa mềm, snapshot tên tỉnh/phường, một mặc định/khách bằng partial unique index), `wishlist_item` (unique customer+sku, xóa cứng), `admin_division` (2 cấp tỉnh/phường, mã GSO zero-pad, nạp bằng Flyway repeatable `db/reference/R__admin_divisions.sql`), `admin_audit_log`.
+- API: `/api/customers/me`, `/api/customers/me/addresses`, `/api/customers/me/wishlist`; công khai `/api/divisions/provinces[/{code}/wards]`; nội bộ `/internal/customers/{id}/addresses/{addressId}` (order-service lấy địa chỉ đáng tin khi checkout); admin: `/api/admin/customers` (tìm, chi tiết, khóa/mở - STAFF trở lên), `/api/admin/staff` (chỉ ADMIN).
 - Gọi Keycloak Admin API bằng REST (`RestClient` + token client credentials của client `customer-service`), bọc trong một adapter riêng (`KeycloakAdminGateway`) để dễ test và mock.
 
 ### 7.4. catalog-service
