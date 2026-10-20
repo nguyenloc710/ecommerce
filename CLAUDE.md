@@ -52,7 +52,7 @@ npm run dev | npm run build | npm run lint
 docker compose -f local/docker-compose.yml up -d
 ```
 
-Port local: gateway 8080, customer 8081, catalog 8082, order 8083, notification 8084, Keycloak 8180, storefront 3000. Trên K8s mọi service chạy 8080 (`SERVER_PORT` từ ConfigMap).
+Port local: gateway 8080, customer 8091, catalog 8092, order 8093, notification 8094, Keycloak 8180, Valkey 6382, Mailpit UI 8026, storefront 3000 (808x, 6379–6381, 8025 đã bị các dự án khác trên máy chiếm). Trên K8s mọi service chạy 8080 (`SERVER_PORT` từ ConfigMap).
 
 ## Phiên bản
 
@@ -63,7 +63,7 @@ Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-sta
 - `@WebMvcTest` → `org.springframework.boot.webmvc.test.autoconfigure` (cần dep test `spring-boot-starter-webmvc-test`); `@MockitoBean` là của Spring Framework: `org.springframework.test.context.bean.override.mockito`
 - Testcontainers 2.x do Boot quản lý version, artifact có tiền tố: `testcontainers-postgresql`, `testcontainers-junit-jupiter`, `testcontainers-rabbitmq`
 - Slice test không nạp auto-config của dự án: thêm `@ImportAutoConfiguration(JpaAuditingAutoConfiguration.class)` cho `@DataJpaTest`, `@ImportAutoConfiguration({CommonWebAutoConfiguration.class, ResourceServerAutoConfiguration.class})` + property `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` cho `@WebMvcTest`
-- Surefire chạy với `-Duser.timezone=UTC` (parent pom); không bỏ vì PostgreSQL alpine không có múi giờ "Asia/Saigon" mà Windows báo
+- Surefire và `spring-boot:run` chạy với `-Duser.timezone=UTC` (parent pom); không bỏ vì PostgreSQL từ chối múi giờ "Asia/Saigon" mà JVM trên Windows báo. Chạy từ IDE thì thêm VM option này
 
 ## Kiến trúc
 

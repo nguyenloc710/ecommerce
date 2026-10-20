@@ -123,6 +123,14 @@
                     </configuration>
                 </plugin>
                 <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <!-- Chạy local bằng spring-boot:run ở UTC (xem ghi chú múi giờ ở surefire) -->
+                        <jvmArguments>-Duser.timezone=UTC</jvmArguments>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>

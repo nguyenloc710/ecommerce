@@ -11,6 +11,8 @@ Nguồn mặc định khi code tự động. Gặp điểm mơ hồ không có �
 | P-03 | Tích hợp đối tác chưa có credential: viết adapter interface + impl `Mock*` dùng ở dev/staging, impl thật để sẵn với config rỗng, bật qua profile | Không chặn tiến độ, đổi nhà cung cấp không chạm nghiệp vụ |
 | P-04 | Ngôn ngữ: code/identifier tiếng Anh; comment, log, message, tài liệu, commit tiếng Việt | Quy ước đã có trong CLAUDE.md |
 | P-05 | Test tích hợp dùng Testcontainers (PostgreSQL, RabbitMQ, Keycloak). Docker đang chạy trên máy dev | Image test `postgres:16-alpine` (có sẵn trên máy, Docker Hub tải chậm); prod 17. Đổi về 17 khi mạng ổn |
+| P-07 | Port local: service 8080/8091–8094, Valkey 6382, Mailpit 1026/8026; image từ `public.ecr.aws` và `ghcr.io` | Máy dev đang chạy dự án khác chiếm 808x, 6379–6381, 8025; Docker Hub tải lỗi |
+| P-08 | Client Keycloak `dev-cli` (public, password grant) chỉ tồn tại ở realm local để lấy token bằng curl/Postman | Không đưa vào realm staging/prod |
 | P-06 | API trả **mã** cho nhãn/trạng thái (`NEW`, `SOLD_OUT`, `CONFIRMED`...), FE dịch sang tiếng Việt; chuỗi hiển thị chỉ có ở message lỗi (đã i18n) | Backend không trộn ngôn ngữ vào dữ liệu |
 
 ## Giao diện (đã chốt ngày 20/10/2026 trên canvas mẫu)

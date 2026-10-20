@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8083}
+  port: ${SERVER_PORT:8093}
   shutdown: graceful
 
 spring:
@@ -65,7 +65,7 @@ ecommerce:
       - /webhooks/**
   clients:
     catalog:
-      base-url: ${CATALOG_BASE_URL:http://localhost:8082}
+      base-url: ${CATALOG_BASE_URL:http://localhost:8092}
 
 management:
   endpoints:

@@ -24,7 +24,7 @@ services:
   valkey:
     image: public.ecr.aws/valkey/valkey:8.1.10-alpine
     ports:
-      - "6379:6379"
+      - "6382:6379" # 6379-6381 đã bị dự án khác dùng
 
   rabbitmq:
     image: public.ecr.aws/docker/library/rabbitmq:4.1.8-management-alpine
@@ -59,12 +59,12 @@ services:
       postgres:
         condition: service_healthy
 
-  # Hộp thư giả: Keycloak gửi mail xác thực/quên mật khẩu vào đây. UI: http://localhost:8025
+  # Hộp thư giả: Keycloak gửi mail xác thực/quên mật khẩu vào đây. UI: http://localhost:8026
   mailpit:
     image: ghcr.io/axllent/mailpit:v1.31.6
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "1026:1025"
+      - "8026:8025"
 
   # Object storage S3 cho module media: thêm khi làm tới module này (MinIO hoặc Cloudflare R2 bucket dev).
 

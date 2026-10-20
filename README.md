@@ -11,10 +11,10 @@ backend/                 Maven multi-module (Java 21, Spring Boot 4.0, Spring Cl
   common/common-security   Resource server JWT Keycloak: claim roles -> ROLE_*, CurrentUser, security chain mặc định
   common/common-events     Hợp đồng event giữa service (record) + exchange/routing key RabbitMQ
   gateway                  Spring Cloud Gateway: route, JWT, rate limit (Valkey), CORS          :8080
-  customer-service         profile, address, wishlist, staffadmin                               :8081
-  catalog-service          product, inventory, search, review, media                            :8082
-  order-service            cart, promotion, checkout, orders, payment, shipping                 :8083
-  notification-service     dispatch, channel, template                                          :8084
+  customer-service         profile, address, wishlist, staffadmin                               :8091
+  catalog-service          product, inventory, search, review, media                            :8092
+  order-service            cart, promotion, checkout, orders, payment, shipping                 :8093
+  notification-service     dispatch, channel, template                                          :8094
 frontend/
   storefront/              Next.js 16 (App Router, TypeScript, Tailwind), gồm cả /admin          :3000
   keycloak-theme/          Theme đăng nhập Keycloakify (chưa khởi tạo)
@@ -48,8 +48,8 @@ npm run dev
 | Keycloak admin | http://localhost:8180/admin | `admin` / `admin` |
 | Keycloak realm `ecommerce` | http://localhost:8180/realms/ecommerce/account | `customer@example.com` / `Customer123`, `admin@example.com` / `Admin12345` |
 | RabbitMQ | http://localhost:15672 | `ecommerce` / `ecommerce` |
-| Mailpit (email Keycloak gửi) | http://localhost:8025 | |
-| Swagger UI từng service | http://localhost:808x/swagger-ui.html | |
+| Mailpit (email Keycloak gửi) | http://localhost:8026 | |
+| Swagger UI từng service | http://localhost:809x/swagger-ui.html | |
 
 Mật khẩu và client secret trong `local/` chỉ dùng cho dev, không dùng ở staging/prod.
 

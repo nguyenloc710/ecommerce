@@ -10,7 +10,7 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      port: ${REDIS_PORT:6382}
   security:
     oauth2:
       resourceserver:
@@ -35,11 +35,11 @@ spring:
             - RemoveRequestHeader=Cookie
           routes:
             - id: customer
-              uri: ${CUSTOMER_SERVICE_URL:http://localhost:8081}
+              uri: ${CUSTOMER_SERVICE_URL:http://localhost:8091}
               predicates:
                 - Path=/api/customers/**,/api/admin/customers/**,/api/admin/staff/**
             - id: catalog
-              uri: ${CATALOG_SERVICE_URL:http://localhost:8082}
+              uri: ${CATALOG_SERVICE_URL:http://localhost:8092}
               predicates:
                 - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/reviews/**,/api/admin/catalog/**,/api/admin/inventory/**
               filters:
@@ -50,7 +50,7 @@ spring:
                     redis-rate-limiter.burstCapacity: 120
                     redis-rate-limiter.requestedTokens: 1
             - id: order-create
-              uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+              uri: ${ORDER_SERVICE_URL:http://localhost:8093}
               predicates:
                 - Path=/api/orders
                 - Method=POST
@@ -63,11 +63,11 @@ spring:
                     redis-rate-limiter.burstCapacity: 60
                     redis-rate-limiter.requestedTokens: 6
             - id: order
-              uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+              uri: ${ORDER_SERVICE_URL:http://localhost:8093}
               predicates:
                 - Path=/api/cart/**,/api/orders/**,/api/payments/**,/api/vouchers/**,/api/admin/orders/**,/api/admin/vouchers/**
             - id: webhooks
-              uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+              uri: ${ORDER_SERVICE_URL:http://localhost:8093}
               predicates:
                 - Path=/webhooks/**
               filters:
