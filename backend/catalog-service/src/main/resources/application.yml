@@ -21,8 +21,14 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+    properties:
+      org.hibernate.envers.audit_table_suffix: _aud
+      org.hibernate.envers.revision_field_name: rev
+      org.hibernate.envers.revision_type_field_name: revtype
   flyway:
     enabled: true
+    # Local: nạp thêm dữ liệu mẫu (R__seed_dev.sql); trên Kubernetes ghi đè chỉ còn db/migration
+    locations: classpath:db/migration,classpath:db/seed
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -91,6 +97,8 @@ spring:
   config:
     activate:
       on-cloud-platform: kubernetes
+  flyway:
+    locations: classpath:db/migration
 logging:
   structured:
     format:

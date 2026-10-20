@@ -21,6 +21,7 @@
         <module>common/common-web</module>
         <module>common/common-security</module>
         <module>common/common-events</module>
+        <module>common/common-jpa</module>
         <module>gateway</module>
         <module>customer-service</module>
         <module>catalog-service</module>
@@ -82,6 +83,11 @@
                 <artifactId>common-events</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>vn.ecommerce</groupId>
+                <artifactId>common-jpa</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -114,6 +120,14 @@
                             <arg>-Amapstruct.defaultComponentModel=spring</arg>
                             <arg>-Amapstruct.unmappedTargetPolicy=ERROR</arg>
                         </compilerArgs>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <!-- Test chạy ở UTC như container prod; máy dev Windows báo "Asia/Saigon" mà PostgreSQL alpine không có -->
+                        <argLine>-Duser.timezone=UTC -Dfile.encoding=UTF-8 -XX:+EnableDynamicAgentLoading</argLine>
                     </configuration>
                 </plugin>
                 <plugin>

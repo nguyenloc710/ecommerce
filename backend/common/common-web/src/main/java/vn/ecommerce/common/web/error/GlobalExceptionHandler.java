@@ -1,5 +1,7 @@
 package vn.ecommerce.common.web.error;
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 /**
  * Đổi mọi exception thành {@link ErrorResponse}. Đây là nơi duy nhất log stack trace của lỗi hệ thống,
@@ -50,6 +53,27 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, CommonErrorKeys.VALIDATION_FAILED, new Object[0], violations);
     }
 
+    /** Validate trên tham số method ({@code @Validated} controller với @Min/@Pattern trên @RequestParam). */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleMethodValidation(HandlerMethodValidationException ex) {
+        List<ErrorResponse.FieldViolation> violations = ex.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> new ErrorResponse.FieldViolation(
+                                result.getMethodParameter().getParameterName(),
+                                messageSource.getMessage(error, LocaleContextHolder.getLocale()))))
+                .toList();
+        return build(HttpStatus.BAD_REQUEST, CommonErrorKeys.VALIDATION_FAILED, new Object[0], violations);
+    }
+
+    /** Validate do Bean Validation ném trực tiếp (service có {@code @Validated}, hoặc tham số không qua Spring MVC). */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
+        List<ErrorResponse.FieldViolation> violations = ex.getConstraintViolations().stream()
+                .map(violation -> new ErrorResponse.FieldViolation(lastNode(violation.getPropertyPath()), violation.getMessage()))
+                .toList();
+        return build(HttpStatus.BAD_REQUEST, CommonErrorKeys.VALIDATION_FAILED, new Object[0], violations);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex) {
         log.warn("Request body không đọc được: {}", ex.getMostSpecificCause().getClass().getSimpleName());
@@ -72,6 +96,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
         log.error("Lỗi không mong đợi", ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, CommonErrorKeys.INTERNAL_ERROR, new Object[0], List.of());
+    }
+
+    private static String lastNode(Path path) {
+        String name = null;
+        for (Path.Node node : path) {
+            name = node.getName();
+        }
+        return name;
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String key, Object[] args,

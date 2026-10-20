@@ -10,7 +10,8 @@ Nguồn mặc định khi code tự động. Gặp điểm mơ hồ không có �
 | P-02 | Dừng và hỏi chỉ khi: cần credential/tài khoản của chủ shop (VNPay, MoMo, GHN, GHTK, Google OAuth, VPS, Cloudflare), thao tác xóa dữ liệu hoặc tốn tiền, CI đỏ 2 lần liên tiếp không tự sửa được, hoặc tới **checkpoint** ghi trong backlog | |
 | P-03 | Tích hợp đối tác chưa có credential: viết adapter interface + impl `Mock*` dùng ở dev/staging, impl thật để sẵn với config rỗng, bật qua profile | Không chặn tiến độ, đổi nhà cung cấp không chạm nghiệp vụ |
 | P-04 | Ngôn ngữ: code/identifier tiếng Anh; comment, log, message, tài liệu, commit tiếng Việt | Quy ước đã có trong CLAUDE.md |
-| P-05 | Test tích hợp dùng Testcontainers (PostgreSQL, RabbitMQ, Keycloak). Docker đang chạy trên máy dev | |
+| P-05 | Test tích hợp dùng Testcontainers (PostgreSQL, RabbitMQ, Keycloak). Docker đang chạy trên máy dev | Image test `postgres:16-alpine` (có sẵn trên máy, Docker Hub tải chậm); prod 17. Đổi về 17 khi mạng ổn |
+| P-06 | API trả **mã** cho nhãn/trạng thái (`NEW`, `SOLD_OUT`, `CONFIRMED`...), FE dịch sang tiếng Việt; chuỗi hiển thị chỉ có ở message lỗi (đã i18n) | Backend không trộn ngôn ngữ vào dữ liệu |
 
 ## Giao diện (đã chốt ngày 20/10/2026 trên canvas mẫu)
 

@@ -57,7 +57,13 @@ Port local: gateway 8080, customer 8081, catalog 8082, order 8083, notification 
 ## Phiên bản
 
 Java 21, Spring Boot **4.0.x**, Spring Cloud **2025.1.x**, Spring Modulith **2.0.x**, Next.js 16. Chưa nâng lên Boot 4.1: Spring Cloud tương ứng (2026.0) mới có bản milestone.
-Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-starter-flyway`, `spring-boot-starter-security-oauth2-resource-server` / `-oauth2-client`, `spring-boot-starter-opentelemetry`. Package auto-config của Boot cũng đã đổi (ví dụ `org.springframework.boot.security.autoconfigure...`); tra tên thật trong jar ở `~/.m2` thay vì đoán.
+Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-starter-flyway`, `spring-boot-starter-security-oauth2-resource-server` / `-oauth2-client`, `spring-boot-starter-opentelemetry`. Package auto-config của Boot cũng đã đổi (ví dụ `org.springframework.boot.security.autoconfigure...`); tra tên thật trong jar ở `~/.m2` thay vì đoán. Đã xác minh:
+- `@EntityScan` → `org.springframework.boot.persistence.autoconfigure.EntityScan`
+- `@DataJpaTest` → `org.springframework.boot.data.jpa.test.autoconfigure` (cần dep test `spring-boot-starter-data-jpa-test`); `@AutoConfigureTestDatabase` → `org.springframework.boot.jdbc.test.autoconfigure`
+- `@WebMvcTest` → `org.springframework.boot.webmvc.test.autoconfigure` (cần dep test `spring-boot-starter-webmvc-test`); `@MockitoBean` là của Spring Framework: `org.springframework.test.context.bean.override.mockito`
+- Testcontainers 2.x do Boot quản lý version, artifact có tiền tố: `testcontainers-postgresql`, `testcontainers-junit-jupiter`, `testcontainers-rabbitmq`
+- Slice test không nạp auto-config của dự án: thêm `@ImportAutoConfiguration(JpaAuditingAutoConfiguration.class)` cho `@DataJpaTest`, `@ImportAutoConfiguration({CommonWebAutoConfiguration.class, ResourceServerAutoConfiguration.class})` + property `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` cho `@WebMvcTest`
+- Surefire chạy với `-Duser.timezone=UTC` (parent pom); không bỏ vì PostgreSQL alpine không có múi giờ "Asia/Saigon" mà Windows báo
 
 ## Kiến trúc
 
@@ -75,6 +81,7 @@ Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-sta
   - Path công khai khai báo bằng `ecommerce.security.public-paths` / `public-get-paths`.
   - Role đọc từ claim phẳng `roles` (mapper `realm-roles-flat` của Keycloak) qua `KeycloakRolesConverter`.
   - Gateway không dùng chain này; nó có `GatewaySecurityConfig` riêng nhưng tái dùng converter.
+- `common-jpa`: `AuditableEntity` (id UUID sinh ở app, audit cột, `@Version`), `SoftDeletableEntity` (`markDeleted`), `CurrentAuditorProvider` lấy `sub` từ JWT (job/consumer = `system`), `AuditRevisionEntity` cho Envers (bảng `revinfo` có `username`), `InBatches` chia lô `IN`. Service dùng phải khai báo `@EntityScan({"vn.ecommerce.<svc>", "vn.ecommerce.common.jpa"})` và tạo bảng `revinfo` + `<bảng>_aud` bằng Flyway (Envers cấu hình suffix `_aud`, cột `rev`/`revtype` trong `application.yml`).
 - `common-events`: record event thuần Java + `EventRoutes` (topic exchange `ecommerce.events`, routing key `<domain>.<event>.v<n>`). Chỉ thêm field; đổi nghĩa thì tạo event `.v2`.
 
 ### Auth (Keycloak)
