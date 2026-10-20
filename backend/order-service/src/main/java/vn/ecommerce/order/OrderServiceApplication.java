@@ -2,6 +2,7 @@ package vn.ecommerce.order;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 
 /**
  * Giỏ hàng, khuyến mãi, checkout, đơn hàng, thanh toán, vận chuyển.
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * (type ở package gốc của module) hoặc qua event. Kiểm tra bằng {@code ModularityTests}.
  */
 @SpringBootApplication
+@EntityScan(basePackages = {"vn.ecommerce.order", "vn.ecommerce.common.jpa"})
 public class OrderServiceApplication {
 
     public static void main(String[] args) {

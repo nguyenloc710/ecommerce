@@ -296,6 +296,8 @@ shipment (id, order_id, carrier, tracking_code, fee, status)
 ```
 - Nếu bước 5 lỗi sau khi đã giữ hàng: reservation tự hết hạn theo TTL, order-service cũng gửi lệnh release. Không cần saga orchestrator.
 - Email và tên người nhận được snapshot vào đơn, nên notification-service không phải gọi Keycloak.
+- MVP (E3): thanh toán online dùng cổng giả `MOCK_ONLINE` (B-18) và hãng vận chuyển giả `MockCarrier` (B-19) cùng webhook ký HMAC; VNPay/MoMo, GHN/GHTK thật thay bằng bean mới ở giai đoạn Go-live. Có thêm `POST /api/checkout/quote` để FE hiển thị bảng tính (giá hiện tại, giảm giá, lựa chọn giao hàng) trước khi đặt.
+- Địa chỉ giao hàng lấy từ sổ địa chỉ qua `GET /internal/customers/{id}/addresses/{addressId}` của customer-service (B-15) hoặc khách nhập tay; đơn lưu snapshot JSONB.
 
 Trạng thái đơn: `PENDING → AWAITING_PAYMENT → CONFIRMED → PACKING → SHIPPING → DELIVERED → COMPLETED`, nhánh lỗi: `CANCELLED`, `RETURN_REQUESTED → RETURNED → REFUNDED`.
 

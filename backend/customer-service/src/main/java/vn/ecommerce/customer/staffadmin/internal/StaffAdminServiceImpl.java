@@ -14,7 +14,7 @@ import vn.ecommerce.common.web.error.BadRequestException;
 import vn.ecommerce.common.web.error.NotFoundException;
 import vn.ecommerce.customer.profile.CustomerStatus;
 import vn.ecommerce.customer.profile.ProfileApi;
-import vn.ecommerce.customer.staffadmin.internal.audit.AdminAuditRecorder;
+import vn.ecommerce.common.jpa.audit.AdminAuditRecorder;
 import vn.ecommerce.customer.staffadmin.internal.client.KeycloakAdminGateway;
 import vn.ecommerce.customer.staffadmin.internal.client.KeycloakUser;
 import vn.ecommerce.customer.staffadmin.internal.dto.LockCommand;
@@ -40,6 +40,9 @@ class StaffAdminServiceImpl implements StaffAdminService {
     private final KeycloakAdminGateway keycloak;
     private final ProfileApi profileApi;
     private final AdminAuditRecorder audit;
+
+    static final String TARGET_CUSTOMER = "CUSTOMER";
+    static final String TARGET_STAFF = "STAFF";
     private final CurrentUser currentUser;
 
     @Override
@@ -52,7 +55,7 @@ class StaffAdminServiceImpl implements StaffAdminService {
         keycloak.logoutAllSessions(customerId.toString());
         Map<String, Object> details = new HashMap<>();
         details.put("reason", command == null ? null : command.reason());
-        audit.record(ACTION_CUSTOMER_LOCK, AdminAuditRecorder.TARGET_CUSTOMER, customerId.toString(), details);
+        audit.record(ACTION_CUSTOMER_LOCK, TARGET_CUSTOMER, customerId.toString(), details);
         log.info("Khóa khách hàng {}", customerId);
     }
 
@@ -60,7 +63,7 @@ class StaffAdminServiceImpl implements StaffAdminService {
     public void unlockCustomer(UUID customerId) {
         profileApi.setStatus(customerId, CustomerStatus.ACTIVE);
         keycloak.setEnabled(customerId.toString(), true);
-        audit.record(ACTION_CUSTOMER_UNLOCK, AdminAuditRecorder.TARGET_CUSTOMER, customerId.toString(), Map.of());
+        audit.record(ACTION_CUSTOMER_UNLOCK, TARGET_CUSTOMER, customerId.toString(), Map.of());
         log.info("Mở khóa khách hàng {}", customerId);
     }
 
@@ -74,7 +77,7 @@ class StaffAdminServiceImpl implements StaffAdminService {
     public StaffView createStaff(StaffCreateCommand command) {
         String email = command.email().trim().toLowerCase();
         String id = keycloak.createStaff(email, command.fullName().trim(), command.temporaryPassword());
-        audit.record(ACTION_STAFF_CREATE, AdminAuditRecorder.TARGET_STAFF, id, Map.of("email", email));
+        audit.record(ACTION_STAFF_CREATE, TARGET_STAFF, id, Map.of("email", email));
         return keycloak.findUser(id).map(StaffAdminServiceImpl::toView)
                 .orElseGet(() -> new StaffView(id, email, command.fullName().trim(), true, Instant.now()));
     }
@@ -86,7 +89,7 @@ class StaffAdminServiceImpl implements StaffAdminService {
         if (!enabled) {
             keycloak.logoutAllSessions(user.id());
         }
-        audit.record(enabled ? ACTION_STAFF_ENABLE : ACTION_STAFF_DISABLE, AdminAuditRecorder.TARGET_STAFF, user.id(),
+        audit.record(enabled ? ACTION_STAFF_ENABLE : ACTION_STAFF_DISABLE, TARGET_STAFF, user.id(),
                 Map.of("email", user.email() == null ? "" : user.email()));
     }
 

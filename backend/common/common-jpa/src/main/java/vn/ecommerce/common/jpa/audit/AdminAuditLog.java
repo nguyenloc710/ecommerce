@@ -1,4 +1,4 @@
-package vn.ecommerce.customer.staffadmin.internal.audit;
+package vn.ecommerce.common.jpa.audit;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,7 +13,10 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/** Bản ghi bất biến về thao tác của nhân viên; chỉ thêm, không sửa/xóa. */
+/**
+ * Bản ghi bất biến về thao tác của nhân viên (khóa khách, đổi trạng thái đơn, tạo voucher...); chỉ thêm, không sửa/xóa.
+ * Mỗi service có bảng {@code admin_audit_log} riêng với cùng cấu trúc (migration của service tự tạo).
+ */
 @Getter
 @Entity
 @Table(name = "admin_audit_log")

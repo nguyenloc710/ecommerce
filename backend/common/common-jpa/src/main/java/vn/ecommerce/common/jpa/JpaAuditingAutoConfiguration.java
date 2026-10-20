@@ -4,6 +4,8 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import vn.ecommerce.common.jpa.audit.AdminAuditRecorder;
+import vn.ecommerce.common.jpa.audit.JpaAdminAuditRecorder;
 import vn.ecommerce.common.security.CurrentUser;
 
 /**
@@ -24,5 +26,12 @@ public class JpaAuditingAutoConfiguration {
     @ConditionalOnMissingBean(name = "currentAuditorProvider")
     CurrentAuditorProvider currentAuditorProvider(CurrentUser currentUser) {
         return new CurrentAuditorProvider(currentUser);
+    }
+
+    /** Ghi admin_audit_log; service có thể thay bằng bean riêng. */
+    @Bean
+    @ConditionalOnMissingBean
+    AdminAuditRecorder adminAuditRecorder(CurrentUser currentUser) {
+        return new JpaAdminAuditRecorder(currentUser);
     }
 }

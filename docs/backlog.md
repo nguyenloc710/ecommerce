@@ -35,12 +35,14 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 
 ## E3. order-service
 
-- [ ] E3.1 Module `cart`: giỏ của khách đăng nhập (`cart`, `cart_item` có `engraving`), gộp giỏ khách vãng lai khi đăng nhập (`POST /api/cart/merge`), giá luôn tra lại từ catalog qua `CatalogClient`
-- [ ] E3.2 Module `promotion`: `voucher` (giảm %/cố định, tối đa, điều kiện tối thiểu, hạn, số lượt), `POST /api/vouchers/validate`; admin CRUD
-- [ ] E3.3 Module `shipping`: `ShippingCarrier` interface, `MockCarrier` (phí cố định theo B-07), tính phí theo địa chỉ, tạo vận đơn, webhook trạng thái
-- [ ] E3.4 Module `checkout` + `orders`: `POST /api/orders` (Idempotency-Key) theo luồng 7.5 của thiết kế; `order_status_history`; state machine trong enum; `GET /api/orders/me`, `GET /api/orders/{code}`; event `order.confirmed/cancelled/shipped/delivered`
-- [ ] E3.5 Module `payment`: `PaymentGateway` interface, `CodGateway`, `MockOnlineGateway` (trả URL giả + webhook giả để test), webhook idempotent theo `provider_txn_id`, kiểm tra chữ ký qua interface
-- [ ] E3.6 Admin đơn hàng: `GET /api/admin/orders` (lọc theo tab trạng thái, tìm), chuyển trạng thái có kiểm tra, `admin_audit_log`, tạo vận đơn hàng loạt
+- [x] E3.1 Module `cart`: giỏ server cho khách đăng nhập (`GET /api/cart`, `PUT /api/cart/items`, `DELETE /api/cart/items/{skuId}`, `POST /api/cart/merge`), dòng = (sku, khắc tên), giá/tồn tra lại từ catalog qua `CatalogClient` mỗi lần xem, `issues` cảnh báo hết hàng/ngừng bán
+- [x] E3.2 Module `promotion`: `voucher` PERCENT/FIXED (trần, tối thiểu, hạn, số lượt, lượt/khách), `voucher_usage`, `POST /api/vouchers/validate`; admin CRUD `/api/admin/vouchers` (chỉ ADMIN, xóa mềm, audit)
+- [x] E3.3 Module `shipping`: `ShippingCarrier` strategy + `CarrierRegistry` (bean thật ghi đè `MockCarrier` cùng mã), phí GHN 25k/GHTK 18k, freeship ≥ 500k (B-07), `shipment`, webhook `POST /webhooks/shipping/mock` (HMAC) → Spring event `ShipmentStatusChanged` → orders DELIVERED. GHN/GHTK thật ở E6
+- [x] E3.4 Module `checkout` + `orders`: `POST /api/checkout/quote`, `POST /api/orders` (Idempotency-Key, 201/200 replay) theo luồng 7.5; địa chỉ từ sổ (gọi customer `/internal`) hoặc nhập tay; `order_status_history`; state machine trong `OrderStatus`; mã `ORD-yymmdd-NNNN`; `GET /api/orders/me|{code}`, `POST /api/orders/{code}/cancel`; event confirmed/cancelled/shipped/delivered qua outbox; job hủy đơn online quá 15 phút (B-20)
+- [x] E3.5 Module `payment`: `PaymentGateway` strategy, `CodGateway`, `MockOnlineGateway` (payUrl `/thanh-toan/mock/{orderId}` + webhook `POST /webhooks/payments/mock` ký HMAC-SHA256), idempotent theo `provider_txn_id`, lệch số tiền → FAILED. VNPay/MoMo ở E6
+- [x] E3.6 Admin đơn hàng: `GET /api/admin/orders?status&q`, `POST /{code}/status|ship|cancel`, `POST /api/admin/orders/ship` hàng loạt (mỗi đơn một transaction), `admin_audit_log` (recorder dùng chung trong common-jpa)
+
+- [ ] E3.7 Xác minh lại E2E sau fix converter: catalog `RabbitConfig` phải tin package `vn.ecommerce.common.events` (message từ outbox rơi vào DLQ `catalog.order-events.dlq`); restart catalog-service, đặt đơn COD, kiểm tra reservation COMMITTED và `on_hand` trừ đúng. Áp dụng cùng cấu hình cho notification-service (E4)
 
 ⏸ **CHECKPOINT C2**: đặt được đơn COD end-to-end bằng Swagger/curl, kho trừ đúng, email xác nhận vào Mailpit
 

@@ -5,6 +5,10 @@ server:
 spring:
   application:
     name: order-service
+  http:
+    clients:
+      connect-timeout: 3s
+      read-timeout: 10s
   threads:
     virtual:
       enabled: true
@@ -64,8 +68,38 @@ ecommerce:
     public-paths:
       - /webhooks/**
   clients:
+    # Registration client_credentials (role INTERNAL) dùng chung cho mọi client /internal
+    internal-registration-id: keycloak-internal
     catalog:
       base-url: ${CATALOG_BASE_URL:http://localhost:8092}
+    customer:
+      base-url: ${CUSTOMER_BASE_URL:http://localhost:8091}
+  cart:
+    max-lines: 50
+    max-quantity-per-line: 99
+  shipping:
+    # B-07: freeship từ 500.000₫
+    freeship-threshold: 500000
+    # B-07: phí mặc định khi chưa tích hợp API hãng thật (MockCarrier)
+    carriers:
+      - code: GHN
+        name: Giao Hàng Nhanh
+        fee: 25000
+        eta-days: 3
+      - code: GHTK
+        name: Giao Hàng Tiết Kiệm
+        fee: 18000
+        eta-days: 4
+    mock:
+      secret: ${SHIPPING_MOCK_SECRET:shipping-mock-dev-secret}
+  payment:
+    mock:
+      secret: ${PAYMENT_MOCK_SECRET:payment-mock-dev-secret}
+      pay-url-template: ${PAYMENT_MOCK_PAY_URL:http://localhost:3000/thanh-toan/mock/{orderId}}
+  orders:
+    # B-20: đơn online chưa thanh toán quá hạn này sẽ bị hủy (= TTL giữ hàng B-03)
+    payment-timeout: 15m
+    expiry-check-interval: 60s
 
 management:
   endpoints:

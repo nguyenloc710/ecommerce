@@ -2,6 +2,7 @@ package vn.ecommerce.catalog.messaging.internal;
 
 import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.support.converter.DefaultJacksonJavaTypeMapper;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
@@ -17,8 +18,13 @@ class RabbitConfig {
         return ExchangeBuilder.topicExchange(EventRoutes.EXCHANGE).durable(true).build();
     }
 
+    /** Header __TypeId__ trỏ tới record trong common-events; mặc định chỉ tin java.util/java.lang nên phải khai báo package tin cậy. */
     @Bean
     MessageConverter jsonMessageConverter() {
-        return new JacksonJsonMessageConverter();
+        JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter();
+        DefaultJacksonJavaTypeMapper typeMapper = new DefaultJacksonJavaTypeMapper();
+        typeMapper.setTrustedPackages("vn.ecommerce.common.events");
+        converter.setJavaTypeMapper(typeMapper);
+        return converter;
     }
 }

@@ -26,7 +26,7 @@ import vn.ecommerce.common.web.error.BadRequestException;
 import vn.ecommerce.common.web.error.NotFoundException;
 import vn.ecommerce.customer.profile.CustomerStatus;
 import vn.ecommerce.customer.profile.ProfileApi;
-import vn.ecommerce.customer.staffadmin.internal.audit.AdminAuditRecorder;
+import vn.ecommerce.common.jpa.audit.AdminAuditRecorder;
 import vn.ecommerce.customer.staffadmin.internal.client.KeycloakAdminGateway;
 import vn.ecommerce.customer.staffadmin.internal.client.KeycloakUnavailableException;
 import vn.ecommerce.customer.staffadmin.internal.client.KeycloakUser;
@@ -61,7 +61,7 @@ class StaffAdminServiceImplTest {
         verify(profileApi).setStatus(CUSTOMER, CustomerStatus.LOCKED);
         verify(keycloak).setEnabled(CUSTOMER.toString(), false);
         verify(keycloak).logoutAllSessions(CUSTOMER.toString());
-        verify(audit).record(eq(StaffAdminServiceImpl.ACTION_CUSTOMER_LOCK), eq(AdminAuditRecorder.TARGET_CUSTOMER),
+        verify(audit).record(eq(StaffAdminServiceImpl.ACTION_CUSTOMER_LOCK), eq(StaffAdminServiceImpl.TARGET_CUSTOMER),
                 eq(CUSTOMER.toString()), eq(mapWithReason("Gian lận")));
     }
 
@@ -116,7 +116,7 @@ class StaffAdminServiceImplTest {
         assertThat(view.fullName()).isEqualTo("Trần Minh");
         assertThat(view.enabled()).isTrue();
         assertThat(view.createdAt()).isNotNull();
-        verify(audit).record(StaffAdminServiceImpl.ACTION_STAFF_CREATE, AdminAuditRecorder.TARGET_STAFF, "kc-1",
+        verify(audit).record(StaffAdminServiceImpl.ACTION_STAFF_CREATE, StaffAdminServiceImpl.TARGET_STAFF, "kc-1",
                 Map.of("email", "minh@shop.vn"));
     }
 
@@ -137,7 +137,7 @@ class StaffAdminServiceImplTest {
 
         verify(keycloak).setEnabled("kc-2", false);
         verify(keycloak).logoutAllSessions("kc-2");
-        verify(audit).record(eq(StaffAdminServiceImpl.ACTION_STAFF_DISABLE), eq(AdminAuditRecorder.TARGET_STAFF), eq("kc-2"), any());
+        verify(audit).record(eq(StaffAdminServiceImpl.ACTION_STAFF_DISABLE), eq(StaffAdminServiceImpl.TARGET_STAFF), eq("kc-2"), any());
     }
 
     @Test
