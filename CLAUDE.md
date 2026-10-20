@@ -22,6 +22,17 @@ Cấu hình dự án nằm trong `.claude/` (commit, cả team dùng chung); c�
 - Không commit thẳng lên `main`: tạo nhánh `feat/<service>-<topic>` (hoặc `fix/`, `chore/`), commit message tiếng Việt. Push, tạo PR và lệnh tác động lên cluster luôn hỏi trước (xem `permissions.ask` trong `.claude/settings.json`).
 - Kết quả test phải là kết quả thật: nói rõ lệnh nào đã chạy, lệnh nào chưa.
 
+## Chế độ tự chủ
+
+Chủ shop đã chốt thiết kế và yêu cầu làm liên tục không hỏi. Khi được giao "làm tiếp" / "chạy backlog":
+
+1. Đọc `docs/backlog.md`, lấy task đầu tiên chưa tick. Đọc `docs/decisions.md` để lấy mặc định.
+2. Làm theo `/ecom-feature` (BE) hoặc quy tắc `frontend.md` (FE) trên nhánh riêng; test xanh; `/ecom-review` tự sửa mục *phải sửa*.
+3. Fast-forward vào `main`, push (quyết định P-01). Tick task trong backlog ngay trong cùng commit.
+4. Lệch thiết kế hoặc quyết định mới → ghi `docs/ke-hoach-thiet-ke.md` / `docs/decisions.md` trong cùng commit.
+5. Sang task tiếp theo. **Không hỏi** trừ các điều kiện dừng ở P-02 (credential, xóa dữ liệu, tốn tiền, CI đỏ 2 lần, checkpoint).
+6. Khi dừng ở checkpoint: báo cáo ngắn gồm việc đã xong, cách demo, quyết định mới, việc chưa làm.
+
 ## Lệnh thường dùng
 
 Máy dev không cài Maven toàn cục: luôn dùng wrapper trong `backend/` (`./mvnw` hoặc `mvnw.cmd` trên Windows).

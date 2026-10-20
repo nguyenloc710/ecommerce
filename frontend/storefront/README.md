@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# storefront
 
-## Getting Started
+Next.js 16 (App Router, TypeScript, Tailwind v4). Gồm cả trang quản trị `/admin`.
 
-First, run the development server:
+## Chạy
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run lint
+npm run build    # output standalone (.next/standalone) để đóng image
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Biến môi trường
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Tạo `.env.local` (không commit):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `NEXT_PUBLIC_SHOP_NAME` | `Tên shop` | Tên hiển thị ở logo, title, footer |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080` | Gateway backend |
 
-## Learn More
+Biến cho Auth.js (Keycloak) sẽ thêm ở task E5.1.
 
-To learn more about Next.js, take a look at the following resources:
+## Cấu trúc
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/app/                 route (App Router)
+src/components/site/     header, footer
+src/components/product/  thẻ sản phẩm
+src/components/ui/       thành phần dùng chung (placeholder ảnh...)
+src/lib/                 format tiền, dữ liệu giả tạm thời
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Token thiết kế (màu, font, nút, eyebrow) khai báo trong `src/app/globals.css`, giá trị chốt ở `docs/decisions.md` mục UI-*.
+Trước khi viết code đọc `node_modules/next/dist/docs/` vì Next.js 16.4 có thay đổi so với các bản trước.
