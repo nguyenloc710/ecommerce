@@ -37,6 +37,10 @@ Phạm vi: $ARGUMENTS (để trống thì review `git diff` của working tree s
 - Query trong vòng lặp, `SELECT` nguyên entity khi chỉ cần vài cột, `IN` không chia lô.
 - Đơn hàng: giá lấy từ catalog, không tin client; snapshot tên/giá/biến thể vào `order_item`.
 - Tồn kho: `available = on_hand - reserved`, reservation có `expires_at`, optimistic lock, không khóa bi quan.
+- **Audit:** bảng mới có đủ `created_at/by`, `updated_at/by`; entity kế thừa `AuditableEntity`, không set tay từ request.
+- **Xóa mềm:** dữ liệu được tham chiếu (sản phẩm, SKU, danh mục, voucher, địa chỉ...) có dùng `deleted_at` thay vì `DELETE` không; truy vấn đọc có lọc `deleted_at IS NULL`; unique index có là partial index không. Xóa cứng chỉ với dữ liệu tạm.
+- **Lịch sử cập nhật:** chuyển trạng thái có ghi `*_status_history` và kiểm tra trạng thái nguồn hợp lệ; giá/tồn kho/sản phẩm có `@Audited`; thao tác nhân viên có `admin_audit_log`.
+- **Cập nhật an toàn:** API update nhận `version` từ client và set vào entity; không đọc rồi ghi đè mù.
 
 ## 5. Event
 - Publish bằng `ApplicationEventPublisher` trong `@Transactional` (không `RabbitTemplate` trực tiếp).
@@ -51,7 +55,17 @@ Phạm vi: $ARGUMENTS (để trống thì review `git diff` của working tree s
 ## 7. Test và sạch code
 - Mỗi nhánh lỗi một test; verify không ghi khi lỗi; mapper thật, không mock mapper.
 - Query phức tạp test bằng Testcontainers PostgreSQL, không H2.
-- Magic number/string, Optional làm field/param, `Date`/`double` cho tiền/thời gian, comment tiếng Anh lẫn tiếng Việt.
+- **Hardcode:** TTL, retry, URL, giới hạn... nằm trong code thay vì `@ConfigurationProperties`; magic number/string thay vì hằng có tên; chuỗi hiển thị cho người dùng viết thẳng thay vì message key i18n (vi + en).
+- **Interface:** service có `interface + Impl` chưa; controller/module khác có phụ thuộc vào Impl hay entity không; gọi service khác/đối tác có qua adapter interface (`CatalogClient`, `PaymentGateway`) hay gọi `RestClient` thẳng trong nghiệp vụ.
+- Optional làm field/param, `Date`/`double` cho tiền/thời gian, comment tiếng Anh lẫn tiếng Việt.
+
+## 8. SOLID và thiết kế (xem mục cùng tên trong `.claude/rules/backend.md`)
+- `switch`/`if` theo tên nhà cung cấp, kiểu giảm giá, cách tính giá ở nhiều chỗ → nên sửa thành Strategy chọn qua `Map`; nếu chỉ có 1 impl và chưa có kế hoạch thêm thì **không** bắt phải tách.
+- Chuyển trạng thái đơn/thanh toán/vận đơn viết rải rác `if (status == ...)` thay vì bảng chuyển trạng thái tập trung trong enum → nên sửa.
+- Class service quá nhiều trách nhiệm (checkout + giá + khuyến mãi + giữ hàng trong một class), method > Sonar Cognitive Complexity 15 hoặc > ~40 dòng → nên sửa, nêu cách tách.
+- Interface public của module quá rộng khiến module gọi phải phụ thuộc thứ không dùng → nên sửa (tách theo người gọi).
+- Impl ném `UnsupportedOperationException` hoặc caller phải `instanceof` → phải sửa.
+- **Chiều ngược lại cũng là vi phạm:** abstraction không bảo vệ điểm thay đổi nào (interface cho mapper/helper một impl, factory/visitor tự chế, tầng trung gian chỉ chuyển tiếp) → nên bỏ. Nêu rõ "pattern này đang bảo vệ điểm thay đổi nào?" khi kết luận.
 
 ## Kết quả
 Trả về theo mẫu:
