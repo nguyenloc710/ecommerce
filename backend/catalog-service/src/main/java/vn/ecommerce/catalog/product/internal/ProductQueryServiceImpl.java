@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.ecommerce.catalog.product.CategoryTreeNode;
+import vn.ecommerce.catalog.product.FacetsView;
 import vn.ecommerce.catalog.product.PageView;
 import vn.ecommerce.catalog.product.ProductCardView;
 import vn.ecommerce.catalog.product.ProductDetailView;
@@ -36,10 +36,13 @@ import vn.ecommerce.catalog.product.internal.domain.VariantStatus;
 import vn.ecommerce.catalog.product.internal.repo.BrandRepository;
 import vn.ecommerce.catalog.product.internal.repo.CategoryRepository;
 import vn.ecommerce.catalog.product.internal.repo.CategoryRow;
+import vn.ecommerce.catalog.product.internal.repo.FacetCounts;
 import vn.ecommerce.catalog.product.internal.repo.ImageRow;
 import vn.ecommerce.catalog.product.internal.repo.ProductImageRepository;
 import vn.ecommerce.catalog.product.internal.repo.ProductRepository;
 import vn.ecommerce.catalog.product.internal.repo.ProductRow;
+import vn.ecommerce.catalog.product.internal.repo.ProductSearchCriteria;
+import vn.ecommerce.catalog.product.internal.repo.ProductSearchRepository;
 import vn.ecommerce.catalog.product.internal.repo.ProductVariantRepository;
 import vn.ecommerce.catalog.product.internal.repo.VariantRow;
 import vn.ecommerce.common.jpa.InBatches;
@@ -52,12 +55,11 @@ class ProductQueryServiceImpl implements ProductQueryService {
 
     /** Mã nhãn, FE dịch sang chữ hiển thị (không trả chuỗi tiếng Việt từ API). */
     private static final String LABEL_NEW = "NEW";
-    /** UUID giả cho tham số không dùng tới (xem ghi chú ở {@link ProductRepository}). */
-    private static final UUID UNUSED_ID = new UUID(0L, 0L);
 
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final ProductRepository productRepository;
+    private final ProductSearchRepository searchRepository;
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
     private final ProductMapper mapper;
@@ -70,11 +72,8 @@ class ProductQueryServiceImpl implements ProductQueryService {
 
     @Override
     public PageView<ProductCardView> listProducts(ProductListQuery query) {
-        List<CategoryRow> categories = activeCategories();
-        Set<UUID> categoryIds = resolveCategorySubtree(query.categorySlug(), categories);
-        UUID brandId = resolveBrandId(query.brandSlug());
-
-        Page<ProductRow> page = pageProducts(query, categoryIds, brandId);
+        ProductSearchCriteria criteria = toCriteria(query);
+        Page<ProductRow> page = searchRepository.search(criteria, PageRequest.of(query.page(), query.size()));
         List<UUID> productIds = page.getContent().stream().map(ProductRow::id).toList();
 
         Map<UUID, List<VariantRow>> variantsByProduct = InBatches.query(productIds, variantRepository::findActiveRowsByProductIdIn)
@@ -87,6 +86,12 @@ class ProductQueryServiceImpl implements ProductQueryService {
                 .map(row -> toCard(row, variantsByProduct.getOrDefault(row.id(), List.of()), firstImageByProduct.get(row.id()), newSince))
                 .toList();
         return new PageView<>(cards, page.getNumber(), page.getSize(), page.getTotalElements(), page.hasNext());
+    }
+
+    @Override
+    public FacetsView facets(ProductListQuery query) {
+        FacetCounts counts = searchRepository.facets(toCriteria(query));
+        return new FacetsView(toFacets(counts.options()), toFacets(counts.attributes()), counts.priceMin(), counts.priceMax());
     }
 
     @Override
@@ -107,6 +112,14 @@ class ProductQueryServiceImpl implements ProductQueryService {
                 variants.stream().map(mapper::toVariantView).toList(),
                 images,
                 options(variants));
+    }
+
+    // ---- điều kiện lọc ----
+
+    private ProductSearchCriteria toCriteria(ProductListQuery query) {
+        Set<UUID> categoryIds = resolveCategorySubtree(query.categorySlug(), activeCategories());
+        UUID brandId = resolveBrandId(query.brandSlug());
+        return new ProductSearchCriteria(query.q(), categoryIds, brandId, query.options(), query.priceMin(), query.priceMax(), query.sort());
     }
 
     // ---- danh mục ----
@@ -170,20 +183,6 @@ class ProductQueryServiceImpl implements ProductQueryService {
 
     // ---- sản phẩm ----
 
-    private Page<ProductRow> pageProducts(ProductListQuery query, Set<UUID> categoryIds, UUID brandId) {
-        boolean allCategories = categoryIds.isEmpty();
-        boolean anyBrand = brandId == null;
-        // Tham số "không dùng" vẫn phải có giá trị hợp lệ để driver suy được kiểu (xem ProductRepository)
-        List<UUID> ids = allCategories ? List.of(UNUSED_ID) : List.copyOf(categoryIds);
-        UUID brand = anyBrand ? UNUSED_ID : brandId;
-        Pageable pageable = PageRequest.of(query.page(), query.size());
-        return switch (query.sort()) {
-            case NEWEST -> productRepository.pageNewest(allCategories, ids, anyBrand, brand, pageable);
-            case PRICE_ASC -> productRepository.pagePriceAsc(allCategories, ids, anyBrand, brand, pageable);
-            case PRICE_DESC -> productRepository.pagePriceDesc(allCategories, ids, anyBrand, brand, pageable);
-        };
-    }
-
     private ProductCardView toCard(ProductRow row, List<VariantRow> variants, String imageUrl, Instant newSince) {
         Optional<VariantRow> cheapest = variants.stream().min(Comparator.comparing(VariantRow::price));
         BigDecimal price = cheapest.map(VariantRow::price).orElse(null);
@@ -209,5 +208,12 @@ class ProductQueryServiceImpl implements ProductQueryService {
         List<ProductDetailView.OptionView> result = new ArrayList<>();
         values.forEach((name, set) -> result.add(new ProductDetailView.OptionView(name, List.copyOf(set))));
         return result;
+    }
+
+    private static List<FacetsView.Facet> toFacets(Map<String, LinkedHashMap<String, Long>> counts) {
+        return counts.entrySet().stream()
+                .map(e -> new FacetsView.Facet(e.getKey(), e.getValue().entrySet().stream()
+                        .map(v -> new FacetsView.Value(v.getKey(), v.getValue())).toList()))
+                .toList();
     }
 }

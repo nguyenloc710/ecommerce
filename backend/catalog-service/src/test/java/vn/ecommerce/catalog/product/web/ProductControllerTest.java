@@ -1,6 +1,8 @@
 package vn.ecommerce.catalog.product.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -8,6 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import vn.ecommerce.catalog.product.FacetsView;
+import vn.ecommerce.catalog.product.ProductListQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -37,6 +42,27 @@ class ProductControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size").value(24))
                 .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void list_parsesOptionFilters_fromOptPrefixedParams() throws Exception {
+        when(productQueryService.listProducts(any())).thenReturn(new PageView<>(List.of(), 0, 24, 0, false));
+
+        mockMvc.perform(get("/api/products").param("q", "nhan").param("opt.size", "6,7").param("opt.color", "Bạc").param("priceMax", "900000"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<ProductListQuery> query = ArgumentCaptor.forClass(ProductListQuery.class);
+        verify(productQueryService).listProducts(query.capture());
+        assertThat(query.getValue().q()).isEqualTo("nhan");
+        assertThat(query.getValue().options()).containsEntry("size", List.of("6", "7")).containsEntry("color", List.of("Bạc"));
+        assertThat(query.getValue().priceMax()).isEqualByComparingTo("900000");
+    }
+
+    @Test
+    void facets_isPublic() throws Exception {
+        when(productQueryService.facets(any())).thenReturn(new FacetsView(List.of(), List.of(), null, null));
+
+        mockMvc.perform(get("/api/products/facets").param("category", "nhan")).andExpect(status().isOk());
     }
 
     @Test

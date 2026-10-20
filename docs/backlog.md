@@ -13,6 +13,7 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 - [x] E0.3 Helm chart dùng chung + values staging/prod
 - [x] E0.4 Cấu hình Claude Code (`.claude/`), rules, skills, hook
 - [x] E0.5 Storefront: token thiết kế (màu, font, cỡ chữ) trong `globals.css`, layout gốc có header/footer theo mẫu đã chốt, trang chủ tĩnh đúng bố cục mẫu. Tiêu chí: `npm run build` xanh, trang chủ render đủ các khối của mẫu với dữ liệu giả
+- [ ] E0.7 (nhỏ) JVM của `@SpringBootTest` thoát chậm 30s sau khi test xong (surefire phải kill fork); tìm thread non-daemon (RabbitMQ/Hikari) và tắt đúng cách
 - [x] E0.6 Kiểm chứng hạ tầng local: `docker compose up` chạy, realm import được, lấy được token của `customer@example.com` bằng client `dev-cli` (thêm client này, bật password grant chỉ cho dev), 5 service khởi động với DB thật. Tiêu chí: `curl` qua gateway tới `/actuator/health` của từng service trả `UP`
 
 ## E1. catalog-service
@@ -20,7 +21,7 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 - [x] E1.1 Module `product`: migration + entity `category` (cây, `attribute_template` JSONB), `brand`, `product`, `product_variant`, `product_image`; `AuditableEntity`, xóa mềm, Envers cho product/variant. API công khai: `GET /api/categories` (cây), `GET /api/products?category=&page=&size=&sort=` (projection card: tên, slug, giá, ảnh chính, màu), `GET /api/products/{slug}` (chi tiết + variant + ảnh). Tiêu chí: test service + `@DataJpaTest` Testcontainers, seed 12 sản phẩm mẫu bằng Flyway `R__seed_dev.sql` chỉ profile dev
 - [x] E1.2 Module `product` admin: `POST/PUT/DELETE /api/admin/catalog/categories|brands|products|variants`, upload thứ tự ảnh, cập nhật nhận `version`. Tiêu chí: `@WebMvcTest` với `jwt()` role STAFF pass, CUSTOMER bị 403
 - [x] E1.3 Module `inventory`: `inventory_item`, `reservation`; API nội bộ `POST /internal/skus/lookup`, `POST /internal/reservations` (idempotent theo orderId, TTL 15 phút), `POST /internal/reservations/{orderId}/commit|release`; job nhả hết hạn; admin `GET/PUT /api/admin/inventory`. Tiêu chí: test đồng thời 2 reservation trên 1 SKU không bán âm
-- [ ] E1.4 Module `search`: cột `search_vector` + `unaccent`/`pg_trgm`, `GET /api/products?q=` tìm không dấu, facet đếm theo thuộc tính (`GET /api/products/facets?category=`). Tiêu chí: tìm "nhan bac" ra "Nhẫn bạc"
+- [x] E1.4 Module `search` (gộp vào module `product` dưới dạng `ProductSearchRepository`, không tách module riêng vì cùng bảng): cột `search_vector` + `unaccent`/`pg_trgm`, `GET /api/products?q=` tìm không dấu, facet đếm theo thuộc tính (`GET /api/products/facets?category=`). Tiêu chí: tìm "nhan bac" ra "Nhẫn bạc"
 - [x] E1.5 Consumer `order.confirmed.v1` → commit reservation; `order.cancelled.v1` → release; idempotent qua `processed_event`. Tiêu chí: test gửi trùng event 2 lần chỉ trừ kho 1 lần
 
 ⏸ **CHECKPOINT C1**: demo catalog qua Swagger + storefront đọc được danh mục/sản phẩm thật

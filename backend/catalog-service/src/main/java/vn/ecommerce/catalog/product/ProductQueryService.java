@@ -10,6 +10,9 @@ public interface ProductQueryService {
     /** @throws vn.ecommerce.common.web.error.NotFoundException khi slug danh mục/thương hiệu không tồn tại */
     PageView<ProductCardView> listProducts(ProductListQuery query);
 
+    /** Facet cho thanh lọc, tính trên tập khớp từ khóa/danh mục/thương hiệu (bỏ qua option và giá đang chọn). */
+    FacetsView facets(ProductListQuery query);
+
     /** @throws vn.ecommerce.common.web.error.NotFoundException khi sản phẩm không tồn tại hoặc không ở trạng thái bán */
     ProductDetailView productDetail(String slug);
 }
