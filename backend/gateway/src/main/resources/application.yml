@@ -41,7 +41,7 @@ spring:
             - id: catalog
               uri: ${CATALOG_SERVICE_URL:http://localhost:8092}
               predicates:
-                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/reviews/**,/api/admin/catalog/**,/api/admin/inventory/**
+                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/reviews/**,/api/inventory/**,/api/admin/catalog/**,/api/admin/inventory/**
               filters:
                 - name: RequestRateLimiter
                   args:
@@ -86,6 +86,11 @@ management:
     health:
       probes:
         enabled: true
+  # Metrics đi qua Prometheus scrape; OTLP metrics push tắt mặc định (bật khi có collector)
+  otlp:
+    metrics:
+      export:
+        enabled: ${OTLP_METRICS_EXPORT_ENABLED:false}
   tracing:
     sampling:
       probability: ${TRACING_SAMPLING_PROBABILITY:1.0}

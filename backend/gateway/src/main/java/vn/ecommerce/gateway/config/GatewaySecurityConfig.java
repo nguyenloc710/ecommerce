@@ -33,7 +33,7 @@ public class GatewaySecurityConfig {
                         .pathMatchers("/actuator/**").permitAll()
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
                         .pathMatchers(HttpMethod.GET,
-                                "/api/products/**", "/api/categories/**", "/api/brands/**", "/api/reviews/**")
+                                "/api/products/**", "/api/categories/**", "/api/brands/**", "/api/reviews/**", "/api/inventory/**")
                         .permitAll()
                         // Webhook đối tác: không có JWT, order-service kiểm tra chữ ký
                         .pathMatchers("/webhooks/**").permitAll()

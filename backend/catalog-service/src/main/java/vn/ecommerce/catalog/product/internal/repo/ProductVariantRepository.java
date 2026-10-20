@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,4 +30,21 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     boolean existsBySkuCode(String skuCode);
 
     boolean existsBySkuCodeAndIdNot(String skuCode, UUID id);
+
+    // ---- tra cứu cho module khác ----
+
+    @Query("""
+            select new vn.ecommerce.catalog.product.internal.repo.VariantInfoRow(
+                v.id, p.id, p.slug, p.name, v.skuCode, v.optionValues, v.price, v.compareAtPrice, v.status, p.status)
+            from ProductVariant v join v.product p
+            where v.id in :ids
+            """)
+    List<VariantInfoRow> findInfoRowsByIdIn(@Param("ids") Collection<UUID> ids);
+
+    @Query("""
+            select v.id from ProductVariant v join v.product p
+            where lower(v.skuCode) like :q or lower(p.name) like :q
+            order by p.name, v.sortOrder
+            """)
+    List<UUID> searchIds(@Param("q") String q, Pageable limit);
 }
