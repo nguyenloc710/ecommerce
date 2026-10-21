@@ -53,6 +53,18 @@ npm run dev
 
 Mật khẩu và client secret trong `local/` chỉ dùng cho dev, không dùng ở staging/prod.
 
+Storefront đọc biến môi trường từ `frontend/storefront/.env.local` (không commit):
+
+| Biến | Dev | Ghi chú |
+|---|---|---|
+| `AUTH_SECRET` | chuỗi ngẫu nhiên (`npx auth secret`) | Khóa mã hóa cookie session, bắt buộc |
+| `AUTH_KEYCLOAK_ID` | `storefront-web` | |
+| `AUTH_KEYCLOAK_SECRET` | `storefront-web-dev-secret` | Secret dev trong realm `local/keycloak` |
+| `AUTH_KEYCLOAK_ISSUER` | `http://localhost:8180/realms/ecommerce` | |
+| `AUTH_TRUST_HOST` | `true` khi chạy `next start`/container | Sau Traefik ở K8s cũng cần |
+| `API_BASE_URL` | `http://localhost:8080` | Gateway, gọi từ server |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | URL quay về sau khi đăng xuất Keycloak |
+
 ## Build và test
 
 ```bash

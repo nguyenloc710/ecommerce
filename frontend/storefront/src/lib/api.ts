@@ -19,7 +19,9 @@ export class ApiError extends Error {
 
 type ErrorBody = { code?: string; message?: string; traceId?: string };
 
-export async function apiFetch<T>(path: string, init: RequestInit & { timeoutMs?: number } = {}): Promise<T> {
+export type ApiFetchInit = RequestInit & { timeoutMs?: number };
+
+export async function apiFetch<T>(path: string, init: ApiFetchInit = {}): Promise<T> {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, ...rest } = init;
   const res = await fetch(`${BASE_URL}${path}`, {
     ...rest,
@@ -35,5 +37,7 @@ export async function apiFetch<T>(path: string, init: RequestInit & { timeoutMs?
     }
     throw new ApiError(res.status, body.code, body.message ?? `Lỗi ${res.status} khi gọi ${path}`, body.traceId);
   }
+  // 204 không có body (ví dụ DELETE)
+  if (res.status === 204 || res.headers.get("content-length") === "0") return undefined as T;
   return (await res.json()) as T;
 }

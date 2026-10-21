@@ -36,6 +36,7 @@ Nguồn mặc định khi code tự động. Gặp điểm mơ hồ không có �
 | UI-15 | Tiền | `Intl.NumberFormat("vi-VN")` + "₫", ví dụ `1.290.000₫` |
 | UI-16 | Tên shop | Chưa có, dùng placeholder "Tên shop" trong code qua biến `NEXT_PUBLIC_SHOP_NAME` |
 | UI-17 | Ảnh mẫu | Ảnh Pexels (miễn phí) để tĩnh trong `frontend/storefront/public/img/seed/`, URL `/img/seed/...` lưu trong `product_image` của seed dev; nguồn ghi ở `CREDITS.md`. Ảnh thật sẽ qua module media (R2) với URL tuyệt đối, FE khai báo `images.remotePatterns` khi đó |
+| UI-18 | Đăng nhập storefront | Auth.js v5 (`next-auth@5.0.0-beta.32`, ghim bản chính xác vì v5 chưa stable), trang `/dang-nhap` (một nút, đăng ký nằm ở Keycloak), `/tai-khoan`, `/admin`. `src/proxy.ts` chặn `/tai-khoan`, `/thanh-toan`, `/admin` (admin cần STAFF/ADMIN, không đủ quyền về `/`), làm mới token trước hạn 60s và chép cookie session mới vào request hiện tại vì refresh token xoay vòng (`revokeRefreshToken`) nên Server Component không được tự làm mới lần hai. Đăng xuất = xóa session + RP-initiated logout Keycloak |
 
 ## Nghiệp vụ
 

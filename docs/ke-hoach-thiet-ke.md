@@ -186,7 +186,7 @@ Cloudflare (DNS, CDN, WAF, chống DDoS — gói Free)
 | Dữ liệu | TanStack Query; Server Components cho trang SEO |
 | State | Zustand (giỏ hàng khách vãng lai) |
 | Form | React Hook Form + Zod |
-| Admin | Route `/admin/*`, middleware kiểm tra role `STAFF`/`ADMIN` từ session |
+| Admin | Route `/admin/*`, proxy (`src/proxy.ts`, tên mới của middleware ở Next 16) kiểm tra role `STAFF`/`ADMIN` từ session |
 
 **Luồng đăng nhập (mô hình BFF):**
 ```
@@ -196,7 +196,8 @@ Cloudflare (DNS, CDN, WAF, chống DDoS — gói Free)
 4. Token lưu trong session cookie đã mã hóa (httpOnly, Secure, SameSite=Lax);
    JavaScript ở trình duyệt không đọc được token
 5. Server Components / Route Handlers gọi gateway kèm "Authorization: Bearer <access_token>"
-6. Access token hết hạn → callback `jwt` của Auth.js dùng refresh token để làm mới
+6. Access token sắp hết hạn (còn < 60s) → `src/proxy.ts` gọi Auth.js, callback `jwt` dùng refresh token để làm mới;
+   cookie mới được chép vào request hiện tại để Server Component dùng ngay (refresh token xoay vòng, chỉ làm mới một chỗ)
 7. Đăng xuất → xóa session + RP-initiated logout (end_session_endpoint của Keycloak)
 ```
 - API công khai (danh sách, chi tiết sản phẩm) gọi không cần token, cache bằng ISR.
