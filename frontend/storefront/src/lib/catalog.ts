@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 import { ApiError, apiFetch } from "@/lib/api";
 import type { ProductCardData } from "@/components/product/product-card";
 import { categories as mockCategories, newArrivals as mockNewArrivals } from "@/lib/mock-data";
@@ -99,6 +100,8 @@ export async function getRelatedProducts(categorySlug: string, excludeSlug: stri
 /** Tồn kho hiện tại: KHÔNG cache, đọc lúc request (gọi trong Suspense). */
 export async function getAvailability(skuIds: string[]): Promise<Record<string, Availability>> {
   if (skuIds.length === 0) return {};
+  // Đánh dấu dữ liệu lúc request trước khi fetch: prerender dừng ở đây thay vì fetch rồi bị hủy (và log cảnh báo giả)
+  await connection();
   try {
     // Timeout dài hơn mặc định: lần gọi đầu sau khi backend khởi động có thể chậm (JIT), mà đây là dữ liệu không cache
     const list = await apiFetch<Availability[]>(`/api/inventory/availability?skuIds=${skuIds.join(",")}`, { cache: "no-store", timeoutMs: 10_000 });
@@ -119,4 +122,34 @@ function mockCategoryTree(): CategoryTreeNode[] {
       children: mockCategories.map((c, i) => ({ id: `mock-${i}`, name: c.name, slug: c.slug, sortOrder: i, children: [] })),
     },
   ];
+}
+
+/** Slug giữ chỗ cho generateStaticParams khi build không gọi được catalog (Cache Components cần ít nhất một tham số). */
+export const PLACEHOLDER_SLUG = "__khong-co__";
+
+const SLUG_PAGE_SIZE = 100;
+const SLUG_MAX_PAGES = 50; // trần an toàn 5.000 sản phẩm cho sitemap/prerender
+
+/** Slug mọi sản phẩm đang bán, cho sitemap và generateStaticParams. Lỗi → danh sách rỗng. */
+export async function listAllProductSlugs(): Promise<string[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CATALOG_CACHE_TAG);
+  const slugs: string[] = [];
+  try {
+    for (let page = 0; page < SLUG_MAX_PAGES; page++) {
+      const res = await apiFetch<PageView<ProductCardView>>(`/api/products?size=${SLUG_PAGE_SIZE}&page=${page}`);
+      slugs.push(...res.items.map((p) => p.slug));
+      if (!res.hasNext) break;
+    }
+  } catch (error) {
+    console.warn("[catalog] không lấy được danh sách slug sản phẩm:", (error as Error).message);
+  }
+  return slugs;
+}
+
+/** Mọi slug danh mục trong cây (gồm danh mục con). */
+export async function listAllCategorySlugs(): Promise<string[]> {
+  const walk = (nodes: CategoryTreeNode[]): string[] => nodes.flatMap((n) => [n.slug, ...walk(n.children)]);
+  return walk(await getCategoryTree());
 }

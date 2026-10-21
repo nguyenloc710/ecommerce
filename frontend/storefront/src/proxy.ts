@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth, STAFF_ROLES } from "@/auth";
+import { categoryExists, productExists } from "@/lib/seo-guard";
 
 /** Trang bắt buộc đăng nhập. Đây là kiểm tra lạc quan; trang vẫn gọi requireSession/requireStaff ở server. */
 const PROTECTED_PREFIXES = ["/tai-khoan", "/thanh-toan", "/admin"];
@@ -26,7 +27,21 @@ const withSession = auth((req) => {
   }
 });
 
+/** /san-pham/{slug}, /danh-muc/{slug} không tồn tại → rewrite sang đường dẫn không có route để nhận 404 thật. */
+const SEO_ROUTES: [RegExp, (slug: string) => Promise<boolean>][] = [
+  [/^\/san-pham\/([^/]+)$/, productExists],
+  [/^\/danh-muc\/([^/]+)$/, categoryExists],
+];
+const NOT_FOUND_PATH = "/__khong-ton-tai";
+
 export async function proxy(req: NextRequest) {
+  if (req.method === "GET") {
+    for (const [pattern, exists] of SEO_ROUTES) {
+      const slug = pattern.exec(req.nextUrl.pathname)?.[1];
+      if (slug && !(await exists(decodeURIComponent(slug)))) return NextResponse.rewrite(new URL(NOT_FOUND_PATH, req.nextUrl));
+    }
+  }
+
   const res = (await withSession(req, { params: Promise.resolve({}) })) as Response;
   if (res.headers.has("location")) return res;
 

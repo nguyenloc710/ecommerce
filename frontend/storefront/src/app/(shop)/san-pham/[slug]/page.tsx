@@ -5,40 +5,49 @@ import { Suspense } from "react";
 import { BuyBoxSkeleton, BuyBoxWithStock } from "@/components/product/buy-box-with-stock";
 import { Gallery } from "@/components/product/gallery";
 import { ProductCard } from "@/components/product/product-card";
-import { getProduct, getRelatedProducts, iconFor } from "@/lib/catalog";
+import { PLACEHOLDER_SLUG, getProduct, getRelatedProducts, iconFor, listAllProductSlugs, type ProductDetail } from "@/lib/catalog";
+import { ProductJsonLd } from "@/components/product/product-json-ld";
 
 type Props = PageProps<"/san-pham/[slug]">;
 
+/** Prerender sẵn mọi sản phẩm đang bán; slug mới thêm sau build được render lần đầu khi có người mở rồi cache. */
+export async function generateStaticParams() {
+  const slugs = await listAllProductSlugs();
+  return (slugs.length > 0 ? slugs : [PLACEHOLDER_SLUG]).map((slug) => ({ slug }));
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  const product = slug === PLACEHOLDER_SLUG ? null : await getProduct(slug);
   if (!product) return {};
   const description = product.description?.slice(0, 160) ?? `${product.name} chính hãng, giao toàn quốc.`;
   return {
     title: product.name,
     description,
+    alternates: { canonical: `/san-pham/${product.slug}` },
     openGraph: { title: product.name, description, images: product.images.slice(0, 1).map((i) => ({ url: i.url, alt: i.alt ?? product.name })) },
   };
 }
 
-export default function ProductPage({ params }: Props) {
-  return (
-    <Suspense fallback={<div className="pad pt-7"><div className="h-6 w-48 animate-pulse bg-stone" /></div>}>
-      <ProductDetailPage params={params} />
-    </Suspense>
-  );
+/**
+ * Kiểm tra sản phẩm tồn tại TRƯỚC mọi <Suspense> để notFound() trả HTTP 404 thật (sau khi stream bắt đầu chỉ còn
+ * được 200 + noindex). getProduct có cache nên lần kiểm tra này không tốn thêm request.
+ */
+export default async function ProductPage({ params }: Props) {
+  const { slug } = await params;
+  const product = slug === PLACEHOLDER_SLUG ? null : await getProduct(slug);
+  if (!product) notFound();
+  return <ProductDetailPage product={product} />;
 }
 
-async function ProductDetailPage({ params }: Pick<Props, "params">) {
-  const { slug } = await params;
-  const product = await getProduct(slug);
-  if (!product) notFound();
+async function ProductDetailPage({ product }: { product: ProductDetail }) {
   const isJewelry = product.breadcrumb.some((b) => b.slug === "trang-suc");
   const attributes = Object.entries(product.attributes).filter(([, v]) => typeof v === "string" || typeof v === "number");
   const related = await getRelatedProducts(product.category.slug, product.slug, 4);
 
   return (
     <main className="flex flex-col pb-20">
+      <ProductJsonLd product={product} />
       <nav aria-label="Đường dẫn" className="pad flex gap-2 pt-5 text-[12px] text-muted lg:pt-6">
         <Link href="/">Trang chủ</Link>
         {product.breadcrumb.map((b) => (

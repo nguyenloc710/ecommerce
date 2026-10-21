@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { KEYCLOAK_ISSUER, signIn, signOut } from "@/auth";
 import { safeCallbackUrl } from "@/lib/callback-url";
 import { getIdToken } from "@/lib/session";
+import { SITE_URL } from "@/lib/site";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export async function login(formData: FormData) {
   await signIn("keycloak", { redirectTo: safeCallbackUrl(formData.get("callbackUrl")) });
