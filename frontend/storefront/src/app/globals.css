@@ -85,6 +85,21 @@ body {
     background: var(--ink);
     color: var(--paper);
   }
+  /* Ô nhập liệu: kẻ mảnh, không bo góc, cao 44px như nút phụ (UI-05) */
+  .input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 0;
+    outline: none;
+  }
+  .input:focus {
+    border-color: var(--ink);
+  }
   /* Ô ảnh placeholder khi chưa có ảnh thật (UI-14) */
   .img-ph {
     position: relative;

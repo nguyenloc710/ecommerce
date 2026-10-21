@@ -46,6 +46,9 @@ async function AccountOverview() {
         <dd className="m-0">{since}</dd>
       </dl>
       <div className="mt-10 flex flex-wrap items-center gap-8">
+        <Link href="/tai-khoan/don-hang" className="eyebrow ul">
+          Đơn hàng của tôi
+        </Link>
         {isStaff(session) && (
           <Link href="/admin" className="eyebrow ul">
             Trang quản trị

@@ -27,6 +27,8 @@ type Mode = "guest" | "server";
 type CartState = {
   lines: CartLine[];
   hydrated: boolean;
+  /** Đã đồng bộ với server xong lần đầu (biết chắc giỏ đang ở chế độ nào). */
+  synced: boolean;
   mode: Mode;
   issues: CartIssue[];
   /** Lỗi gần nhất khi cập nhật giỏ server (hiển thị một dòng, kèm traceId). */
@@ -73,6 +75,7 @@ export const useCartStore = create<CartState>()(
       return {
         lines: [],
         hydrated: false,
+        synced: false,
         mode: "guest",
         issues: [],
         error: null,
@@ -100,9 +103,11 @@ export const useCartStore = create<CartState>()(
         openDrawer: () => set({ drawerOpen: true }),
         closeDrawer: () => set({ drawerOpen: false }),
         sync: async () => {
-          const guest = get().lines;
+          // Chế độ server: chỉ đọc lại giỏ server, không gửi dòng hiện có (sẽ bị merge cộng dồn lần nữa)
+          const guest = get().mode === "guest" ? get().lines : [];
           const seq = ++requestSeq;
-          const res: CartResult | null = await syncCart(guest.map(toInput));
+          const res: CartResult | null = await syncCart(guest.map(toInput)).catch(() => null);
+          set({ synced: true });
           if (seq !== requestSeq) return;
           if (res?.ok) {
             applyServer(res.cart);
