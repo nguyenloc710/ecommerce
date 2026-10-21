@@ -18,16 +18,18 @@ import java.util.UUID;
  *
  * @param paymentMethod  COD | MOCK_ONLINE (bắt buộc khi đặt, tùy chọn khi báo giá)
  * @param shippingCarrier mã hãng (GHN, GHTK); báo giá không có → trả mọi lựa chọn
+ * @param clientIp IP trình duyệt khách do storefront chuyển tiếp (VNPay cần); chỉ dùng để gửi cổng thanh toán
  */
 public record CheckoutRequest(
         @NotEmpty(message = "{validation.required}") @Size(max = 50, message = "{validation.max-length}") List<@Valid Line> lines,
         UUID addressId,
         @Valid AddressInput address,
-        @Pattern(regexp = "COD|MOCK_ONLINE", message = "{validation.enum}") String paymentMethod,
+        @Pattern(regexp = "COD|MOCK_ONLINE|VNPAY", message = "{validation.enum}") String paymentMethod,
         @Size(max = 20, message = "{validation.max-length}") String shippingCarrier,
         @Size(max = 30, message = "{validation.max-length}") String voucherCode,
         @Email(message = "{validation.email}") @Size(max = 255, message = "{validation.max-length}") String contactEmail,
-        @Size(max = 500, message = "{validation.max-length}") String note) {
+        @Size(max = 500, message = "{validation.max-length}") String note,
+        @Size(max = 45, message = "{validation.max-length}") String clientIp) {
 
     public record Line(
             @NotNull(message = "{validation.required}") UUID skuId,

@@ -82,7 +82,7 @@ class OrderApiContractTest {
 
     @Test
     void paymentWebhook_unknownProvider_is404() throws Exception {
-        mockMvc.perform(post("/webhooks/payments/vnpay").contentType(MediaType.APPLICATION_JSON).header("X-Signature", "abc").content("{}"))
+        mockMvc.perform(post("/webhooks/payments/zalopay").contentType(MediaType.APPLICATION_JSON).header("X-Signature", "abc").content("{}"))
                 .andExpect(status().isNotFound());
     }
 

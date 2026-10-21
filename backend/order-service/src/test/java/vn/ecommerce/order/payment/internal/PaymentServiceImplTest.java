@@ -23,6 +23,7 @@ import vn.ecommerce.common.web.security.HmacSignatures;
 import vn.ecommerce.order.orders.OrdersApi;
 import vn.ecommerce.order.payment.PaymentInitResult;
 import vn.ecommerce.order.payment.PaymentMethod;
+import vn.ecommerce.order.payment.PaymentRequest;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceImplTest {
@@ -37,7 +38,7 @@ class PaymentServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        PaymentProperties props = new PaymentProperties(new PaymentProperties.Mock(SECRET, "http://localhost:3000/thanh-toan/mock/{orderId}"));
+        PaymentProperties props = new PaymentProperties(new PaymentProperties.Mock(SECRET, "http://localhost:3000/thanh-toan/mock/{orderId}?ma={orderCode}"), null);
         PaymentGatewayRegistry registry = new PaymentGatewayRegistry(List.of(new CodGateway(), new MockOnlineGateway(props, JsonMapper.builder().build())));
         service = new PaymentServiceImpl(payments, registry, orders);
     }
@@ -46,9 +47,9 @@ class PaymentServiceImplTest {
     void initiate_mockOnline_returnsPayUrlWithOrderId_andPendingStatus() {
         when(payments.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        PaymentInitResult result = service.initiate(ORDER, "ORD-1", new BigDecimal("430000"), PaymentMethod.MOCK_ONLINE);
+        PaymentInitResult result = service.initiate(new PaymentRequest(ORDER, "ORD-1", new BigDecimal("430000"), PaymentMethod.MOCK_ONLINE, null));
 
-        assertThat(result.payUrl()).isEqualTo("http://localhost:3000/thanh-toan/mock/" + ORDER);
+        assertThat(result.payUrl()).isEqualTo("http://localhost:3000/thanh-toan/mock/" + ORDER + "?ma=ORD-1");
         assertThat(result.status()).isEqualTo("PENDING");
     }
 
@@ -56,7 +57,7 @@ class PaymentServiceImplTest {
     void initiate_cod_hasNoPayUrl() {
         when(payments.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        PaymentInitResult result = service.initiate(ORDER, "ORD-1", new BigDecimal("430000"), PaymentMethod.COD);
+        PaymentInitResult result = service.initiate(new PaymentRequest(ORDER, "ORD-1", new BigDecimal("430000"), PaymentMethod.COD, null));
 
         assertThat(result.payUrl()).isNull();
         assertThat(result.status()).isEqualTo("INIT");

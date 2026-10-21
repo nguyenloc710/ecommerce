@@ -31,6 +31,8 @@ export type CheckoutQuote = {
   selectedShipping: ShippingOption | null;
   shippingFee: number;
   total: number;
+  /** Phương thức đang bật ở order-service (cổng chưa có credential thì không có). */
+  paymentMethods: PaymentMethod[];
 };
 
 export type OrderStatus =
@@ -81,12 +83,13 @@ export type OrderSummary = {
   placedAt: string;
 };
 
-export const PAYMENT_METHODS = ["COD", "MOCK_ONLINE"] as const;
+export const PAYMENT_METHODS = ["COD", "MOCK_ONLINE", "VNPAY"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const PAYMENT_LABELS: Record<PaymentMethod, { title: string; hint: string }> = {
   COD: { title: "Thanh toán khi nhận hàng (COD)", hint: "Trả tiền mặt cho nhân viên giao hàng" },
-  MOCK_ONLINE: { title: "Thanh toán online", hint: "Cổng thanh toán thử nghiệm (VNPay/MoMo sẽ thay ở bản chính thức)" },
+  MOCK_ONLINE: { title: "Thanh toán online (thử nghiệm)", hint: "Cổng thanh toán giả dùng khi phát triển" },
+  VNPAY: { title: "VNPay", hint: "Thẻ ATM, QR ngân hàng, Visa/Master; chuyển sang trang VNPay để thanh toán" },
 };
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 import vn.ecommerce.common.web.security.HmacSignatures;
 import vn.ecommerce.order.payment.PaymentMethod;
+import vn.ecommerce.order.payment.PaymentRequest;
 
 /**
  * Cổng giả (B-18): URL trỏ về trang thanh toán giả trên storefront; webhook body
@@ -28,8 +29,10 @@ class MockOnlineGateway implements PaymentGateway {
     }
 
     @Override
-    public GatewayInit initiate(UUID orderId, String orderCode, BigDecimal amount) {
-        String url = properties.mock().payUrlTemplate().replace("{orderId}", orderId.toString());
+    public GatewayInit initiate(PaymentRequest request) {
+        String url = properties.mock().payUrlTemplate()
+                .replace("{orderId}", request.orderId().toString())
+                .replace("{orderCode}", request.orderCode());
         return new GatewayInit(url, Payment.PaymentStatus.PENDING);
     }
 

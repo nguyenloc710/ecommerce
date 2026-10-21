@@ -66,6 +66,8 @@ Storefront đọc biến môi trường từ `frontend/storefront/.env.local` (k
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | URL quay về sau khi đăng xuất Keycloak |
 | `PAYMENT_MOCK_SECRET` | `payment-mock-dev-secret` | Bật cổng thanh toán giả; phải trùng `ecommerce.payment.mock.secret` của order-service. Không đặt ở production |
 
+VNPay ở order-service (mặc định tắt): `VNPAY_ENABLED=true`, `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET` (lấy ở sandbox.vnpayment.vn), `VNPAY_PAY_URL` (mặc định sandbox), `VNPAY_RETURN_URL` (mặc định `http://localhost:3000/thanh-toan/ket-qua/{orderCode}`). IPN URL khai báo với VNPay: `https://<gateway>/webhooks/payments/vnpay`.
+
 ## Build và test
 
 ```bash

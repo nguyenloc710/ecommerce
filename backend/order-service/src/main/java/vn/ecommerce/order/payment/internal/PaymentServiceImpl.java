@@ -3,7 +3,7 @@ package vn.ecommerce.order.payment.internal;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -14,6 +14,7 @@ import vn.ecommerce.common.web.error.NotFoundException;
 import vn.ecommerce.order.orders.OrdersApi;
 import vn.ecommerce.order.payment.PaymentInitResult;
 import vn.ecommerce.order.payment.PaymentMethod;
+import vn.ecommerce.order.payment.PaymentRequest;
 
 @Slf4j
 @Service
@@ -28,10 +29,16 @@ class PaymentServiceImpl implements PaymentService {
     private final OrdersApi orders;
 
     @Override
-    public PaymentInitResult initiate(UUID orderId, String orderCode, BigDecimal amount, PaymentMethod method) {
-        PaymentGateway.GatewayInit init = gateways.require(method).initiate(orderId, orderCode, amount);
-        Payment payment = payments.save(new Payment(orderId, method, amount, init.initialStatus(), init.payUrl()));
-        return new PaymentInitResult(payment.getId(), method, payment.getStatus().name(), payment.getPayUrl());
+    public PaymentInitResult initiate(PaymentRequest request) {
+        PaymentGateway.GatewayInit init = gateways.require(request.method()).initiate(request);
+        Payment payment = payments.save(new Payment(request.orderId(), request.method(), request.amount(), init.initialStatus(), init.payUrl()));
+        return new PaymentInitResult(payment.getId(), request.method(), payment.getStatus().name(), payment.getPayUrl());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<PaymentMethod> availableMethods() {
+        return gateways.methods();
     }
 
     @Override

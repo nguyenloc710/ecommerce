@@ -1,8 +1,10 @@
 package vn.ecommerce.order.checkout.internal;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import vn.ecommerce.order.orders.ShippingAddress;
 import vn.ecommerce.order.payment.PaymentApi;
 import vn.ecommerce.order.payment.PaymentInitResult;
 import vn.ecommerce.order.payment.PaymentMethod;
+import vn.ecommerce.order.payment.PaymentRequest;
 import vn.ecommerce.order.promotion.DiscountQuote;
 import vn.ecommerce.order.promotion.PromotionApi;
 import vn.ecommerce.order.shipping.ShippingApi;
@@ -69,7 +72,7 @@ class CheckoutServiceImpl implements CheckoutService {
                 : options.isEmpty() ? null : options.getFirst();
         BigDecimal fee = selected == null ? BigDecimal.ZERO : selected.fee();
         return new CheckoutQuoteView(priced.toQuoteLines(), priced.subtotal(), hasText(request.voucherCode()) ? request.voucherCode() : null,
-                discount, voucherError, options, selected, fee, priced.subtotal().subtract(discount).add(fee));
+                discount, voucherError, options, selected, fee, priced.subtotal().subtract(discount).add(fee), availablePaymentMethods());
     }
 
     @Override
@@ -86,6 +89,10 @@ class CheckoutServiceImpl implements CheckoutService {
             throw new BadRequestException(CheckoutErrorKeys.PAYMENT_METHOD_REQUIRED);
         }
         PaymentMethod method = PaymentMethod.valueOf(request.paymentMethod());
+        // Kiểm tra trước khi giữ hàng: cổng chưa bật thì báo lỗi rõ ràng thay vì rollback giữa transaction
+        if (!payments.availableMethods().contains(method)) {
+            throw new BadRequestException(CheckoutErrorKeys.PAYMENT_METHOD_UNAVAILABLE, method.name());
+        }
         ShippingAddress address = addresses.require(customerId, request);
         PricedLines priced = pricing.price(request.lines());
         DiscountQuote voucher = hasText(request.voucherCode()) ? promotions.quote(request.voucherCode(), customerId, priced.subtotal()) : null;
@@ -105,7 +112,7 @@ class CheckoutServiceImpl implements CheckoutService {
                 if (voucher != null) {
                     promotions.recordUsage(voucher.voucherId(), orderId, customerId, voucher.discount());
                 }
-                PaymentInitResult payment = payments.initiate(orderId, order.code(), order.total(), method);
+                PaymentInitResult payment = payments.initiate(new PaymentRequest(orderId, order.code(), order.total(), method, request.clientIp()));
                 cart.removeLines(customerId, priced.skuIds());
                 return new Placed(order, payment);
             });
@@ -118,6 +125,12 @@ class CheckoutServiceImpl implements CheckoutService {
         } finally {
             MDC.remove("orderId");
         }
+    }
+
+    /** Thứ tự cố định theo enum để FE hiển thị ổn định. */
+    private List<String> availablePaymentMethods() {
+        Set<PaymentMethod> available = payments.availableMethods();
+        return Arrays.stream(PaymentMethod.values()).filter(available::contains).map(Enum::name).toList();
     }
 
     private String defaultCarrier(PricedLines priced, ShippingAddress address) {

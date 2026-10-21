@@ -1,6 +1,7 @@
 "use server";
 
 import { createHmac, randomUUID } from "node:crypto";
+import { headers } from "next/headers";
 import { ApiError, apiFetch } from "@/lib/api";
 import {
   CUSTOMER_CANCELLABLE,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/checkout-shared";
 import { getProvinces, getWards } from "@/lib/divisions";
 import { authFetch } from "@/lib/session";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Server Action cho thanh toán (E5.6). Lỗi trả về dạng giá trị: message đã dịch từ backend + traceId để khách báo lỗi.
@@ -35,6 +37,13 @@ function cleanLines(lines: CheckoutLine[]): CheckoutLine[] {
     quantity: Math.max(1, Math.min(999, Math.trunc(Number(l.quantity) || 1))),
     engraving: l.engraving?.trim() || undefined,
   }));
+}
+
+/** IP trình duyệt khách (header do proxy/Next đặt) để cổng thanh toán ghi nhận; không hợp lệ thì bỏ. */
+async function clientIp(): Promise<string | undefined> {
+  const h = await headers();
+  const ip = (h.get("x-forwarded-for")?.split(",")[0] ?? h.get("x-real-ip") ?? "").trim();
+  return /^[0-9a-fA-F:.]{2,45}$/.test(ip) ? ip : undefined;
 }
 
 export async function loadWards(provinceCode: string): Promise<Division[]> {
@@ -81,7 +90,11 @@ export async function validateVoucher(code: string, subtotal: number): Promise<R
  * Đặt hàng. `idempotencyKey` do trình duyệt sinh mỗi lần bấm "Đặt hàng" (B-17): bấm lại sau lỗi mạng
  * với cùng key sẽ nhận lại đơn cũ thay vì tạo đơn mới.
  */
-export async function placeOrder(lines: CheckoutLine[], input: CheckoutInput, idempotencyKey: string): Promise<Result<{ code: string; next: string }>> {
+export async function placeOrder(
+  lines: CheckoutLine[],
+  input: CheckoutInput,
+  idempotencyKey: string,
+): Promise<Result<{ code: string; next: string; external: boolean }>> {
   const parsed = checkoutSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Thông tin chưa hợp lệ" };
   const v = parsed.data;
@@ -113,14 +126,20 @@ export async function placeOrder(lines: CheckoutLine[], input: CheckoutInput, id
         voucherCode: v.voucherCode || undefined,
         contactEmail: v.contactEmail,
         note: v.note || undefined,
+        clientIp: await clientIp(),
       }),
       timeoutMs: 15_000,
     });
-    const { order } = res;
-    // payUrl chỉ có ở lần tạo đầu; đơn online chưa trả (kể cả lần gọi lại) thì vẫn đưa sang trang thanh toán
-    const next =
-      order.status === "AWAITING_PAYMENT" ? `/thanh-toan/mock/${order.id}?ma=${encodeURIComponent(order.code)}` : `/thanh-toan/thanh-cong/${encodeURIComponent(order.code)}`;
-    return { ok: true, code: order.code, next };
+    const { order, payUrl } = res;
+    const code = encodeURIComponent(order.code);
+    if (payUrl) {
+      // Cổng giả nằm trên chính storefront (đường dẫn nội bộ); VNPay là trang ngoài
+      const internal = payUrl.startsWith(`${SITE_URL}/`);
+      return { ok: true, code: order.code, next: internal ? payUrl.slice(SITE_URL.length) : payUrl, external: !internal };
+    }
+    // payUrl chỉ có ở lần tạo đầu; gọi lại (cùng Idempotency-Key) mà đơn còn chờ thanh toán thì về trang chi tiết đơn
+    const next = order.status === "AWAITING_PAYMENT" ? `/tai-khoan/don-hang/${code}` : `/thanh-toan/thanh-cong/${code}`;
+    return { ok: true, code: order.code, next, external: false };
   } catch (error) {
     return toError(error);
   }

@@ -3,6 +3,7 @@ package vn.ecommerce.order.payment.internal;
 import java.math.BigDecimal;
 import java.util.UUID;
 import vn.ecommerce.order.payment.PaymentMethod;
+import vn.ecommerce.order.payment.PaymentRequest;
 
 /**
  * Strategy cho từng cổng thanh toán. Thêm cổng = thêm bean; {@link PaymentGatewayRegistry} gom theo {@link PaymentMethod}.
@@ -13,9 +14,9 @@ public interface PaymentGateway {
     PaymentMethod method();
 
     /** Khởi tạo giao dịch ở cổng; COD không có URL. */
-    GatewayInit initiate(UUID orderId, String orderCode, BigDecimal amount);
+    GatewayInit initiate(PaymentRequest request);
 
-    /** Kiểm tra chữ ký webhook trên body thô. Cổng không có webhook (COD) trả false. */
+    /** Kiểm tra chữ ký trên nội dung thô (body JSON, hoặc query string với VNPay). Cổng không có webhook (COD) trả false. */
     boolean verify(String signature, String rawBody);
 
     WebhookNotification parse(String rawBody);

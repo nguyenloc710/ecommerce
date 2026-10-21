@@ -1,9 +1,8 @@
 package vn.ecommerce.order.payment.internal;
 
-import java.math.BigDecimal;
-import java.util.UUID;
 import org.springframework.stereotype.Component;
 import vn.ecommerce.order.payment.PaymentMethod;
+import vn.ecommerce.order.payment.PaymentRequest;
 
 /** Thu tiền khi giao: không có cổng, không có webhook. */
 @Component
@@ -15,7 +14,7 @@ class CodGateway implements PaymentGateway {
     }
 
     @Override
-    public GatewayInit initiate(UUID orderId, String orderCode, BigDecimal amount) {
+    public GatewayInit initiate(PaymentRequest request) {
         return new GatewayInit(null, Payment.PaymentStatus.INIT);
     }
 

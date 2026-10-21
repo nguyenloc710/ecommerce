@@ -95,7 +95,15 @@ ecommerce:
   payment:
     mock:
       secret: ${PAYMENT_MOCK_SECRET:payment-mock-dev-secret}
-      pay-url-template: ${PAYMENT_MOCK_PAY_URL:http://localhost:3000/thanh-toan/mock/{orderId}}
+      pay-url-template: ${PAYMENT_MOCK_PAY_URL:http://localhost:3000/thanh-toan/mock/{orderId}?ma={orderCode}}
+    # E6.1, P-03: tắt mặc định; bật khi có tmnCode/hashSecret (sandbox: sandbox.vnpayment.vn)
+    vnpay:
+      enabled: ${VNPAY_ENABLED:false}
+      tmn-code: ${VNPAY_TMN_CODE:}
+      hash-secret: ${VNPAY_HASH_SECRET:}
+      pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      return-url-template: ${VNPAY_RETURN_URL:http://localhost:3000/thanh-toan/ket-qua/{orderCode}}
+      expire-after: 15m
   orders:
     # B-20: đơn online chưa thanh toán quá hạn này sẽ bị hủy (= TTL giữ hàng B-03)
     payment-timeout: 15m

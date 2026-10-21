@@ -185,7 +185,7 @@ class OrderServiceDbTest {
     private static CheckoutRequest request(List<CheckoutRequest.Line> lines, String paymentMethod, String voucher) {
         CheckoutRequest.AddressInput address = new CheckoutRequest.AddressInput("Lan Nguyễn", "0912345678", "01", "Thành phố Hà Nội", "00004",
                 "Phường Ba Đình", "1 Hàng Bài", null);
-        return new CheckoutRequest(lines, null, address, paymentMethod, "GHN", voucher, "lan@example.com", null);
+        return new CheckoutRequest(lines, null, address, paymentMethod, "GHN", voucher, "lan@example.com", null, null);
     }
 
     private static void signIn(UUID sub, String role) {

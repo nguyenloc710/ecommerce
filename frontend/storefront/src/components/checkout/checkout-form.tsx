@@ -96,6 +96,10 @@ export function CheckoutForm({ email, addresses, provinces }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [synced, linesKey, addressMode, addressId, carrier, voucher]);
 
+  useEffect(() => {
+    if (quote && paymentMethod && !quote.paymentMethods.includes(paymentMethod)) setValue("paymentMethod", "COD");
+  }, [quote, paymentMethod, setValue]);
+
   const applyVoucher = () => {
     const code = voucherInput.trim().toUpperCase();
     if (!code) return;
@@ -147,7 +151,8 @@ export function CheckoutForm({ email, addresses, provinces }: Props) {
       }
       // Server đã bỏ các SKU vừa đặt khỏi giỏ; lấy lại giỏ để header cập nhật
       await useCartStore.getState().sync();
-      router.push(res.next);
+      if (res.external) window.location.assign(res.next);
+      else router.push(res.next);
     });
 
   if (!synced) return <div className="h-64 animate-pulse bg-stone" />;
@@ -163,6 +168,8 @@ export function CheckoutForm({ email, addresses, provinces }: Props) {
   }
 
   const shippingOptions = quote?.shippingOptions ?? [];
+  // Chỉ hiện phương thức order-service đang bật (VNPay cần credential); chưa có quote thì tạm hiện COD
+  const availableMethods = PAYMENT_METHODS.filter((m) => (quote?.paymentMethods ?? ["COD"]).includes(m));
   const selectedCarrier = carrier || quote?.selectedShipping?.carrier;
   const summary = (
     <Summary
@@ -305,7 +312,7 @@ export function CheckoutForm({ email, addresses, provinces }: Props) {
         </Section>
 
         <Section title="Thanh toán">
-          {PAYMENT_METHODS.map((m) => (
+          {availableMethods.map((m) => (
             <label key={m} className="flex cursor-pointer items-center gap-4 border-b border-line py-4 text-[13px]">
               <input type="radio" value={m} {...register("paymentMethod")} className="accent-ink" />
               <span className="flex flex-col">

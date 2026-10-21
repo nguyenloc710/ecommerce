@@ -3,6 +3,7 @@ package vn.ecommerce.order.checkout.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -49,6 +50,8 @@ import vn.ecommerce.order.promotion.DiscountQuote;
 import vn.ecommerce.order.promotion.PromotionApi;
 import vn.ecommerce.order.shipping.ShippingApi;
 import vn.ecommerce.order.shipping.ShippingOption;
+import java.util.EnumSet;
+import vn.ecommerce.order.payment.PaymentRequest;
 
 @ExtendWith(MockitoExtension.class)
 class CheckoutServiceImplTest {
@@ -82,6 +85,8 @@ class CheckoutServiceImplTest {
                 sku(NECKLACE, "Dây chuyền", "300000", 1, true)));
         lenient().when(shipping.option(eq("GHN"), any(), any())).thenReturn(new ShippingOption("GHN", "Giao Hàng Nhanh", new BigDecimal("25000"), 3));
         lenient().when(shipping.options(any(), any())).thenReturn(List.of(new ShippingOption("GHN", "Giao Hàng Nhanh", new BigDecimal("25000"), 3)));
+        // VNPay chưa bật (chưa có credential), như cấu hình mặc định
+        lenient().when(payments.availableMethods()).thenReturn(EnumSet.of(PaymentMethod.COD, PaymentMethod.MOCK_ONLINE));
     }
 
     @Test
@@ -89,7 +94,7 @@ class CheckoutServiceImplTest {
         when(orders.findByIdempotencyKey(CUSTOMER, "key-1")).thenReturn(Optional.empty());
         when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
         when(orders.place(any())).thenAnswer(inv -> orderView(inv.getArgument(0)));
-        when(payments.initiate(any(), any(), any(), eq(PaymentMethod.COD))).thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.COD, "INIT", null));
+        when(payments.initiate(argThat(r -> r.method() == PaymentMethod.COD))).thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.COD, "INIT", null));
 
         // Cùng nhẫn hai dòng (một khắc tên, một không) + dây chuyền
         CheckoutRequest request = request(List.of(line(RING, 1, "LAN"), line(RING, 1, null), line(NECKLACE, 1, null)), "COD", null);
@@ -119,7 +124,7 @@ class CheckoutServiceImplTest {
         when(orders.findByIdempotencyKey(CUSTOMER, "key-2")).thenReturn(Optional.empty());
         when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
         when(orders.place(any())).thenAnswer(inv -> orderView(inv.getArgument(0)));
-        when(payments.initiate(any(), any(), any(), eq(PaymentMethod.MOCK_ONLINE)))
+        when(payments.initiate(argThat(r -> r.method() == PaymentMethod.MOCK_ONLINE)))
                 .thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.MOCK_ONLINE, "PENDING", "http://pay/x"));
 
         CheckoutResult result = service.placeOrder(request(List.of(line(RING, 1, null)), "MOCK_ONLINE", null), "key-2");
@@ -159,7 +164,7 @@ class CheckoutServiceImplTest {
                 .hasMessage(CheckoutErrorKeys.INSUFFICIENT_STOCK);
         verify(catalog, never()).reserve(any(), anyList());
         verify(orders, never()).place(any());
-        verifyNoInteractions(payments);
+        verify(payments, never()).initiate(any());
     }
 
     @Test
@@ -182,7 +187,7 @@ class CheckoutServiceImplTest {
         when(promotions.quote("SALE10", CUSTOMER, new BigDecimal("450000"))).thenReturn(new DiscountQuote(voucherId, "SALE10", new BigDecimal("45000"), null));
         when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
         when(orders.place(any())).thenAnswer(inv -> orderView(inv.getArgument(0)));
-        when(payments.initiate(any(), any(), any(), any())).thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.COD, "INIT", null));
+        when(payments.initiate(any())).thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.COD, "INIT", null));
 
         service.placeOrder(request(List.of(line(RING, 1, null)), "COD", "SALE10"), "key-5");
 
@@ -199,7 +204,7 @@ class CheckoutServiceImplTest {
         UUID addressId = UUID.randomUUID();
         when(customers.findAddress(CUSTOMER, addressId)).thenReturn(Optional.empty());
 
-        CheckoutRequest request = new CheckoutRequest(List.of(line(RING, 1, null)), addressId, null, "COD", "GHN", null, null, null);
+        CheckoutRequest request = new CheckoutRequest(List.of(line(RING, 1, null)), addressId, null, "COD", "GHN", null, null, null, null);
         assertThatThrownBy(() -> service.placeOrder(request, "key-6"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage(CheckoutErrorKeys.ADDRESS_NOT_FOUND);
@@ -217,11 +222,38 @@ class CheckoutServiceImplTest {
         assertThat(quote.voucherError()).isEqualTo("promotion.voucher-expired");
         assertThat(quote.shippingOptions()).hasSize(1);
         assertThat(quote.total()).isEqualByComparingTo("925000");
+        assertThat(quote.paymentMethods()).containsExactly("COD", "MOCK_ONLINE");
+    }
+
+    @Test
+    void placeOrder_paymentMethodNotEnabled_failsBeforeReservingStock() {
+        when(orders.findByIdempotencyKey(any(), anyString())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.placeOrder(request(List.of(line(RING, 1, null)), "VNPAY", null), "key-7"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage(CheckoutErrorKeys.PAYMENT_METHOD_UNAVAILABLE);
+        verify(catalog, never()).reserve(any(), anyList());
+        verify(orders, never()).place(any());
+    }
+
+    @Test
+    void placeOrder_forwardsClientIpToPayment() {
+        when(orders.findByIdempotencyKey(any(), anyString())).thenReturn(Optional.empty());
+        when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
+        when(orders.place(any())).thenAnswer(inv -> orderView(inv.getArgument(0)));
+        when(payments.initiate(any())).thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.MOCK_ONLINE, "PENDING", "http://pay/x"));
+
+        service.placeOrder(request(List.of(line(RING, 1, null)), "MOCK_ONLINE", null), "key-8");
+
+        ArgumentCaptor<PaymentRequest> sent = ArgumentCaptor.forClass(PaymentRequest.class);
+        verify(payments).initiate(sent.capture());
+        assertThat(sent.getValue().clientIp()).isEqualTo("203.0.113.7");
+        assertThat(sent.getValue().amount()).isEqualByComparingTo("475000");
     }
 
     private static CheckoutRequest request(List<CheckoutRequest.Line> lines, String paymentMethod, String voucher) {
         CheckoutRequest.AddressInput address = new CheckoutRequest.AddressInput("Lan", "0912345678", "01", "Thành phố Hà Nội", "00004", "Phường Ba Đình", "1 Hàng Bài", null);
-        return new CheckoutRequest(lines, null, address, paymentMethod, "GHN", voucher, null, "Giao giờ hành chính");
+        return new CheckoutRequest(lines, null, address, paymentMethod, "GHN", voucher, null, "Giao giờ hành chính", "203.0.113.7");
     }
 
     private static CheckoutRequest.Line line(UUID sku, int qty, String engraving) {

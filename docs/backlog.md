@@ -65,7 +65,7 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 
 ## E6. Go-live (cần credential của chủ shop)
 
-- [ ] E6.1 VNPay thật (sandbox trước) qua `PaymentGateway`
+- [ ] E6.1 VNPay thật (sandbox trước) qua `PaymentGateway`. **Code xong** (B-24): `VnpayGateway` (2.1.0, HMAC-SHA512), IPN `GET /webhooks/payments/vnpay`, storefront chọn VNPay khi bật + trang `/thanh-toan/ket-qua/{code}`; đã thử đầu cuối với credential giả + IPN tự ký. **Còn:** tmnCode/hashSecret sandbox của chủ shop để thử với VNPay thật, rồi khai báo IPN URL public trong trang quản trị VNPay
 - [ ] E6.2 MoMo thật qua `PaymentGateway`
 - [ ] E6.3 GHN/GHTK thật qua `ShippingCarrier`
 - [ ] E6.4 Keycloak theme Keycloakify tiếng Việt; Google login
