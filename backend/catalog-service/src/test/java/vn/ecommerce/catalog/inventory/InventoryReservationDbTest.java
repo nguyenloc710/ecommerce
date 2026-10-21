@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -28,7 +29,13 @@ import vn.ecommerce.common.web.error.ConflictException;
  * Chạy cả ứng dụng trên PostgreSQL thật (dữ liệu seed dev): hai đơn tranh chiếc nhẫn cuối cùng cùng lúc,
  * chỉ một bên giữ được; không bán âm kho.
  */
+/*
+ * @DirtiesContext: đóng context ngay sau class, khi container PostgreSQL còn sống. Không có nó, context nằm trong cache
+ * tới lúc JVM thoát, Spring Modulith truy vấn event chưa xong vào DB đã bị dừng và Hikari chờ đủ 30s (E0.7).
+ * Callback afterAll chạy ngược thứ tự đăng ký nên Spring đóng trước, Testcontainers dừng container sau.
+ */
 @Testcontainers
+@DirtiesContext
 @SpringBootTest
 @TestPropertySource(properties = {
         "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/certs",

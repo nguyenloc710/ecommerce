@@ -16,6 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -36,7 +37,13 @@ import vn.ecommerce.customer.wishlist.internal.WishlistService;
  * Cả ứng dụng trên PostgreSQL thật: Flyway chạy migration + nạp 34 tỉnh / 3.321 phường; luồng khách đăng nhập lần đầu
  * → tạo hồ sơ JIT → thêm địa chỉ (snapshot tên tỉnh/phường, mặc định duy nhất) → wishlist idempotent → xóa mềm địa chỉ.
  */
+/*
+ * @DirtiesContext: đóng context ngay sau class, khi container PostgreSQL còn sống. Không có nó, context nằm trong cache
+ * tới lúc JVM thoát, Spring Modulith truy vấn event chưa xong vào DB đã bị dừng và Hikari chờ đủ 30s (E0.7).
+ * Callback afterAll chạy ngược thứ tự đăng ký nên Spring đóng trước, Testcontainers dừng container sau.
+ */
 @Testcontainers
+@DirtiesContext
 @SpringBootTest
 @TestPropertySource(properties = {
         "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/certs",

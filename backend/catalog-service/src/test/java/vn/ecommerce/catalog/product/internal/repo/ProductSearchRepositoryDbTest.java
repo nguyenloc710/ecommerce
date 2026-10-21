@@ -18,6 +18,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -34,7 +35,13 @@ import vn.ecommerce.common.jpa.JpaAuditingAutoConfiguration;
  * Chạy trên PostgreSQL thật: Flyway tạo schema (gồm extension unaccent/pg_trgm, cột search_vector, Envers),
  * kiểm tra tìm không dấu, lọc option/giá, facet, sắp xếp và xóa mềm.
  */
+/*
+ * @DirtiesContext: đóng context ngay sau class, khi container PostgreSQL còn sống. Không có nó, context nằm trong cache
+ * tới lúc JVM thoát, Spring Modulith truy vấn event chưa xong vào DB đã bị dừng và Hikari chờ đủ 30s (E0.7).
+ * Callback afterAll chạy ngược thứ tự đăng ký nên Spring đóng trước, Testcontainers dừng container sau.
+ */
 @Testcontainers
+@DirtiesContext
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ImportAutoConfiguration(JpaAuditingAutoConfiguration.class)

@@ -13,7 +13,7 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 - [x] E0.3 Helm chart dùng chung + values staging/prod
 - [x] E0.4 Cấu hình Claude Code (`.claude/`), rules, skills, hook
 - [x] E0.5 Storefront: token thiết kế (màu, font, cỡ chữ) trong `globals.css`, layout gốc có header/footer theo mẫu đã chốt, trang chủ tĩnh đúng bố cục mẫu. Tiêu chí: `npm run build` xanh, trang chủ render đủ các khối của mẫu với dữ liệu giả
-- [ ] E0.7 (nhỏ) JVM của `@SpringBootTest` thoát chậm 30s sau khi test xong (surefire phải kill fork); tìm thread non-daemon (RabbitMQ/Hikari) và tắt đúng cách
+- [x] E0.7 (nhỏ) JVM test thoát chậm 30s: context Spring nằm trong cache tới lúc JVM thoát, khi đó container PostgreSQL đã dừng nên Spring Modulith (`DefaultEventPublicationRegistry.destroy`) chờ Hikari 30s. Sửa bằng `@DirtiesContext` trên các test Testcontainers; `verify` toàn bộ 3 phút 11 giây, không còn surefire kill fork
 - [x] E0.6 Kiểm chứng hạ tầng local: `docker compose up` chạy, realm import được, lấy được token của `customer@example.com` bằng client `dev-cli` (thêm client này, bật password grant chỉ cho dev), 5 service khởi động với DB thật. Tiêu chí: `curl` qua gateway tới `/actuator/health` của từng service trả `UP`
 
 ## E1. catalog-service

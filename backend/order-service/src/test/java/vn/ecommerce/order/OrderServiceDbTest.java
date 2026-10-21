@@ -25,6 +25,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -57,7 +58,13 @@ import vn.ecommerce.order.shipping.internal.ShippingService;
  * Cả ứng dụng trên PostgreSQL thật, catalog/customer được mock: đặt COD (voucher, phí ship, outbox), idempotency,
  * đặt online + webhook thanh toán, admin tạo vận đơn + webhook giao hàng → DELIVERED, khách hủy đơn.
  */
+/*
+ * @DirtiesContext: đóng context ngay sau class, khi container PostgreSQL còn sống. Không có nó, context nằm trong cache
+ * tới lúc JVM thoát, Spring Modulith truy vấn event chưa xong vào DB đã bị dừng và Hikari chờ đủ 30s (E0.7).
+ * Callback afterAll chạy ngược thứ tự đăng ký nên Spring đóng trước, Testcontainers dừng container sau.
+ */
 @Testcontainers
+@DirtiesContext
 @SpringBootTest
 @TestPropertySource(properties = {
         "spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost/certs",

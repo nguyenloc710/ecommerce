@@ -63,6 +63,7 @@ Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-sta
 - `@WebMvcTest` → `org.springframework.boot.webmvc.test.autoconfigure` (cần dep test `spring-boot-starter-webmvc-test`); `@MockitoBean` là của Spring Framework: `org.springframework.test.context.bean.override.mockito`
 - Testcontainers 2.x do Boot quản lý version, artifact có tiền tố: `testcontainers-postgresql`, `testcontainers-junit-jupiter`, `testcontainers-rabbitmq`
 - Slice test không nạp auto-config của dự án: thêm `@ImportAutoConfiguration(JpaAuditingAutoConfiguration.class)` cho `@DataJpaTest`, `@ImportAutoConfiguration({CommonWebAutoConfiguration.class, ResourceServerAutoConfiguration.class})` + property `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` cho `@WebMvcTest`
+- Test dùng Testcontainers (`@Container static`) phải có `@DirtiesContext` và đặt `@Testcontainers` trước `@SpringBootTest`/`@DataJpaTest`: context đóng trước khi container dừng, nếu không JVM treo 30s lúc thoát
 - Surefire và `spring-boot:run` chạy với `-Duser.timezone=UTC` (parent pom); không bỏ vì PostgreSQL từ chối múi giờ "Asia/Saigon" mà JVM trên Windows báo. Chạy từ IDE thì thêm VM option này
 
 ## Kiến trúc
