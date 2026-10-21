@@ -12,12 +12,14 @@ export function CartHydrator() {
   return null;
 }
 
+/** Desktop mở ngăn kéo thay vì chuyển trang (UI-10). */
 export function CartLinkDesktop() {
   const count = useCartStore(selectCount);
+  const openDrawer = useCartStore((s) => s.openDrawer);
   return (
-    <Link href="/gio-hang" className="hidden text-[12px] font-medium uppercase tracking-[0.12em] hover:opacity-70 lg:inline">
+    <button type="button" onClick={openDrawer} className="hidden cursor-pointer text-[12px] font-medium uppercase tracking-[0.12em] hover:opacity-70 lg:inline">
       Giỏ hàng ({count})
-    </Link>
+    </button>
   );
 }
 

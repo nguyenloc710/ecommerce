@@ -27,6 +27,7 @@ export function BuyBox({ product, availability, showEngraving }: Props) {
   const [engraving, setEngraving] = useState("");
   const [added, setAdded] = useState(false);
   const add = useCartStore((s) => s.add);
+  const openDrawer = useCartStore((s) => s.openDrawer);
 
   const variant = useMemo(
     () => variants.find((v) => product.options.every((o) => v.optionValues[o.name] === selected[o.name])),
@@ -64,6 +65,8 @@ export function BuyBox({ product, availability, showEngraving }: Props) {
       qty,
     );
     setAdded(true);
+    // Desktop mở ngăn kéo giỏ (UI-10); mobile giữ thông báo ngay dưới nút
+    if (window.matchMedia("(min-width: 1024px)").matches) openDrawer();
   };
 
   return (

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CartDrawer } from "@/components/cart/cart-drawer";
 import { CartHydrator, CartLinkDesktop, CartLinkMobile } from "@/components/site/cart-badge";
 
 const shopName = process.env.NEXT_PUBLIC_SHOP_NAME ?? "Tên shop";
@@ -16,6 +17,7 @@ export function SiteHeader() {
   return (
     <>
       <CartHydrator />
+      <CartDrawer />
       <div className="bg-ink px-4 py-2 text-center text-[11px] tracking-[0.08em] text-paper">
         MIỄN PHÍ GIAO HÀNG CHO ĐƠN TỪ 500.000₫ · ĐỔI TRẢ 7 NGÀY
       </div>
