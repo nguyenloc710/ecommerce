@@ -31,13 +31,33 @@ spring:
     listener:
       simple:
         observation-enabled: true
+        # Lỗi quá 3 lần (backoff 2s, 4s) thì reject không requeue -> DLQ (xem NotificationTopology)
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2s
+          multiplier: 2
     template:
       observation-enabled: true
+  # Service này chỉ consume, không phát event ra ngoài
   modulith:
     events:
       externalization:
-        enabled: true
-      republish-outstanding-events-on-restart: true
+        enabled: false
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1026}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
+  thymeleaf:
+    # Chỉ dùng cho email, không phục vụ trang web
+    check-template-location: true
   security:
     oauth2:
       resourceserver:
@@ -46,6 +66,13 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/ecommerce}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/ecommerce/protocol/openid-connect/certs}
           audiences: ecommerce-api
+
+ecommerce:
+  notification:
+    shop-name: ${SHOP_NAME:Maison}
+    from: ${MAIL_FROM:Maison <no-reply@example.vn>}
+    storefront-url: ${STOREFRONT_URL:http://localhost:3000}
+    default-locale: vi
 
 management:
   endpoints:

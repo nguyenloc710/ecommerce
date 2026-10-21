@@ -173,9 +173,19 @@ class ReservationServiceImpl implements ReservationService {
         List<Reservation> reservations = loadReservations(orderId);
         Map<UUID, InventoryItem> items = itemsFor(reservations);
         for (Reservation r : reservations) {
-            if (r.isActive()) {
-                items.get(r.getSkuId()).release(r.getQuantity());
-                r.markReleased();
+            InventoryItem item = items.get(r.getSkuId());
+            switch (r.getStatus()) {
+                case RESERVED -> {
+                    item.release(r.getQuantity());
+                    r.markReleased();
+                }
+                case COMMITTED -> {
+                    // Đơn COD đã chốt kho rồi bị hủy trước khi giao: hàng vẫn ở kho nên cộng lại on_hand
+                    item.restock(r.getQuantity());
+                    r.markReleased();
+                    log.info("Đơn {} hủy sau khi chốt kho: hoàn {} SKU {}", orderId, r.getQuantity(), r.getSkuId());
+                }
+                case RELEASED -> { /* idempotent */ }
             }
         }
         itemRepository.saveAll(items.values());

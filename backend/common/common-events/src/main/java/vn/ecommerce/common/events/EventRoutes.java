@@ -1,5 +1,6 @@
 package vn.ecommerce.common.events;
 
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,15 @@ public final class EventRoutes {
 
     /** Topic exchange duy nhất cho mọi event nghiệp vụ. */
     public static final String EXCHANGE = "ecommerce.events";
+
+    /**
+     * Package chứa record event; consumer khai báo làm trusted packages của converter JSON (Spring AMQP so khớp
+     * đúng tên package, không tính package con). Thêm package event mới thì thêm vào đây.
+     */
+    public static final List<String> EVENT_PACKAGES = List.of(
+            "vn.ecommerce.common.events",
+            "vn.ecommerce.common.events.customer",
+            "vn.ecommerce.common.events.order");
 
     public static final String CUSTOMER_CREATED = "customer.created.v1";
     public static final String ORDER_CONFIRMED = "order.confirmed.v1";

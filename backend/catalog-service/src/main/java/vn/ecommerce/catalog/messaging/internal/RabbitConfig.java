@@ -23,7 +23,7 @@ class RabbitConfig {
     MessageConverter jsonMessageConverter() {
         JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter();
         DefaultJacksonJavaTypeMapper typeMapper = new DefaultJacksonJavaTypeMapper();
-        typeMapper.setTrustedPackages("vn.ecommerce.common.events");
+        typeMapper.setTrustedPackages(EventRoutes.EVENT_PACKAGES.toArray(String[]::new));
         converter.setJavaTypeMapper(typeMapper);
         return converter;
     }

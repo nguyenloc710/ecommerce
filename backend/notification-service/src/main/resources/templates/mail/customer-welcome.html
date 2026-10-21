@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mail/_layout :: page('Chào mừng', ~{::content})}" lang="vi">
+<body>
+<th:block th:fragment="content">
+  <h1 style="font-family:Georgia,serif;font-weight:normal;font-size:24px;margin:16px 0 8px;">
+    Xin chào<th:block th:if="${!#strings.isEmpty(fullName)}"> <span th:text="${fullName}">bạn</span></th:block>,
+  </h1>
+  <p>Cảm ơn bạn đã tạo tài khoản. Từ giờ bạn có thể lưu địa chỉ giao hàng, theo dõi đơn và danh sách yêu thích.</p>
+  <p style="margin:24px 0;">
+    <a th:href="${storefrontUrl + '/moi-ve'}" style="display:inline-block;padding:12px 28px;background:#1c1a17;color:#ffffff;text-decoration:none;letter-spacing:0.1em;font-size:13px;text-transform:uppercase;">Xem hàng mới về</a>
+  </p>
+</th:block>
+</body>
+</html>

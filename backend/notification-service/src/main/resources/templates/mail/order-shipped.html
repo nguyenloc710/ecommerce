@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mail/_layout :: page('Đơn hàng đang giao', ~{::content})}" lang="vi">
+<body>
+<th:block th:fragment="content">
+  <h1 style="font-family:Georgia,serif;font-weight:normal;font-size:24px;margin:16px 0 8px;">Đơn hàng đang trên đường đến bạn</h1>
+  <p>Đơn hàng <strong th:text="${orderCode}">ORD-000000-0000</strong> đã được bàn giao cho
+    <strong th:text="${carrier}">GHN</strong>, mã vận đơn <strong th:text="${trackingCode}">MOCK-GHN-XXXX</strong>.</p>
+  <p>Vui lòng giữ điện thoại để nhân viên giao hàng liên hệ.</p>
+  <p style="margin:24px 0;">
+    <a th:href="${storefrontUrl + '/tai-khoan/don-hang/' + orderCode}" style="display:inline-block;padding:12px 28px;background:#1c1a17;color:#ffffff;text-decoration:none;letter-spacing:0.1em;font-size:13px;text-transform:uppercase;">Theo dõi đơn hàng</a>
+  </p>
+</th:block>
+</body>
+</html>

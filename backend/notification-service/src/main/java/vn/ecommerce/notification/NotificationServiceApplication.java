@@ -2,6 +2,7 @@ package vn.ecommerce.notification;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
  * Gửi email, SMS, Zalo ZNS theo event nghiệp vụ.
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * (type ở package gốc của module) hoặc qua event. Kiểm tra bằng {@code ModularityTests}.
  */
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class NotificationServiceApplication {
 
     public static void main(String[] args) {

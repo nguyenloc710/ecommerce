@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mail/_layout :: page('Đơn hàng đã hủy', ~{::content})}" lang="vi">
+<body>
+<th:block th:fragment="content">
+  <h1 style="font-family:Georgia,serif;font-weight:normal;font-size:24px;margin:16px 0 8px;">Đơn hàng đã hủy</h1>
+  <p>Đơn hàng <strong th:text="${orderCode}">ORD-000000-0000</strong> đã được hủy<th:block th:if="${!#strings.isEmpty(reason)}"> (lý do: <span th:text="${reason}">lý do</span>)</th:block>.</p>
+  <p>Nếu bạn đã thanh toán trước, khoản tiền sẽ được hoàn lại theo phương thức ban đầu trong 5–7 ngày làm việc.</p>
+  <p style="margin:24px 0;">
+    <a th:href="${storefrontUrl}" style="display:inline-block;padding:12px 28px;background:#1c1a17;color:#ffffff;text-decoration:none;letter-spacing:0.1em;font-size:13px;text-transform:uppercase;">Tiếp tục mua sắm</a>
+  </p>
+</th:block>
+</body>
+</html>

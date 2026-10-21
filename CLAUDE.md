@@ -84,7 +84,7 @@ Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-sta
   - Role đọc từ claim phẳng `roles` (mapper `realm-roles-flat` của Keycloak) qua `KeycloakRolesConverter`.
   - Gateway không dùng chain này; nó có `GatewaySecurityConfig` riêng nhưng tái dùng converter.
 - `common-jpa`: `AuditableEntity` (id UUID sinh ở app, audit cột, `@Version`), `SoftDeletableEntity` (`markDeleted`), `CurrentAuditorProvider` lấy `sub` từ JWT (job/consumer = `system`), `AuditRevisionEntity` cho Envers (bảng `revinfo` có `username`), `InBatches` chia lô `IN`. Service dùng phải khai báo `@EntityScan({"vn.ecommerce.<svc>", "vn.ecommerce.common.jpa"})` và tạo bảng `revinfo` + `<bảng>_aud` bằng Flyway (Envers cấu hình suffix `_aud`, cột `rev`/`revtype` trong `application.yml`).
-- `common-events`: record event thuần Java + `EventRoutes` (topic exchange `ecommerce.events`, routing key `<domain>.<event>.v<n>`). Chỉ thêm field; đổi nghĩa thì tạo event `.v2`.
+- `common-events`: record event thuần Java + `EventRoutes` (topic exchange `ecommerce.events`, routing key `<domain>.<event>.v<n>`). Chỉ thêm field; đổi nghĩa thì tạo event `.v2`. Consumer phải đặt `DefaultJacksonJavaTypeMapper.setTrustedPackages(EventRoutes.EVENT_PACKAGES...)` (so khớp đúng tên package, không tính package con; thiếu là message vào DLQ); thêm package event mới thì thêm vào `EVENT_PACKAGES`. `RabbitConfigTest` của notification canh việc này.
 
 ### Auth (Keycloak)
 - Realm `ecommerce`. Service kiểm tra `iss` theo URL public (`KEYCLOAK_ISSUER_URI`), nhưng tải JWKS qua địa chỉ nội bộ (`KEYCLOAK_JWK_SET_URI`); audience bắt buộc là `ecommerce-api`.

@@ -142,6 +142,24 @@ class ReservationServiceImplTest {
     }
 
     @Test
+    void release_afterCommit_restocksOnHand_andIsIdempotent() {
+        Reservation reservation = new Reservation(ORDER, SKU, 2, java.time.Instant.now());
+        InventoryItem item = new InventoryItem(SKU, 3);
+        item.setOnHand(5);
+        item.reserve(2);
+        when(reservationRepository.findByOrderId(ORDER)).thenReturn(List.of(reservation));
+        when(itemRepository.findBySkuIdIn(anyCollection())).thenReturn(List.of(item));
+
+        service.commit(ORDER);
+        service.release(ORDER);
+        service.release(ORDER);
+
+        assertThat(item.getOnHand()).as("hàng chưa giao quay về kho").isEqualTo(5);
+        assertThat(item.getReserved()).isZero();
+        assertThat(reservation.getStatus().name()).isEqualTo("RELEASED");
+    }
+
+    @Test
     void commitFromEvent_skipsDuplicateEvent() {
         UUID eventId = UUID.randomUUID();
         when(processedEvents.markProcessed(eventId, "inventory")).thenReturn(true, false);

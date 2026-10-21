@@ -66,6 +66,11 @@ public class InventoryItem extends AuditableEntity {
         this.onHand -= quantity;
     }
 
+    /** Hoàn tồn khi đơn đã chốt kho bị hủy trước khi giao (hàng chưa rời kho). */
+    public void restock(int quantity) {
+        this.onHand += quantity;
+    }
+
     /** Admin đặt lại số tồn tuyệt đối (kiểm kê, nhập hàng). Service kiểm tra không thấp hơn số đang giữ. */
     public void setOnHand(int onHand) {
         this.onHand = onHand;

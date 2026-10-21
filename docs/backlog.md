@@ -42,13 +42,13 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 - [x] E3.5 Module `payment`: `PaymentGateway` strategy, `CodGateway`, `MockOnlineGateway` (payUrl `/thanh-toan/mock/{orderId}` + webhook `POST /webhooks/payments/mock` ký HMAC-SHA256), idempotent theo `provider_txn_id`, lệch số tiền → FAILED. VNPay/MoMo ở E6
 - [x] E3.6 Admin đơn hàng: `GET /api/admin/orders?status&q`, `POST /{code}/status|ship|cancel`, `POST /api/admin/orders/ship` hàng loạt (mỗi đơn một transaction), `admin_audit_log` (recorder dùng chung trong common-jpa)
 
-- [ ] E3.7 Xác minh lại E2E sau fix converter: catalog `RabbitConfig` phải tin package `vn.ecommerce.common.events` (message từ outbox rơi vào DLQ `catalog.order-events.dlq`); restart catalog-service, đặt đơn COD, kiểm tra reservation COMMITTED và `on_hand` trừ đúng. Áp dụng cùng cấu hình cho notification-service (E4)
+- [x] E3.7 Sửa luồng event end-to-end: converter AMQP của consumer tin các package trong `EventRoutes.EVENT_PACKAGES` (Spring AMQP so khớp đúng tên package, không tính package con; trước đó mọi message vào DLQ); hủy đơn đã chốt kho thì catalog hoàn `on_hand` (B-22). Đã kiểm thật: đặt COD qua gateway → COMMITTED, tồn trừ đúng; hủy → hoàn tồn
 
 ⏸ **CHECKPOINT C2**: đặt được đơn COD end-to-end bằng Swagger/curl, kho trừ đúng, email xác nhận vào Mailpit
 
 ## E4. notification-service
 
-- [ ] E4.1 Consume `order.confirmed/shipped/delivered`, `customer.created`; template Thymeleaf tiếng Việt; gửi qua SMTP (Mailpit dev); `notification_log` idempotent; retry + DLQ
+- [x] E4.1 notification-service: queue `notification.events` + DLQ nghe customer.created, order.confirmed/cancelled/shipped/delivered; template Thymeleaf tiếng Việt (layout chung, tiêu đề i18n `mail.<template>.subject`); `NotificationChannel` strategy (SMTP, Mailpit dev); `notification_log` idempotent theo (event_id, channel); retry 3 lần backoff rồi DLQ. Đã kiểm thật: email xác nhận/giao hàng/hủy vào Mailpit
 
 ## E5. Storefront (Next.js)
 

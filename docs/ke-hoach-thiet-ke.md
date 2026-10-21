@@ -305,6 +305,7 @@ Trạng thái đơn: `PENDING → AWAITING_PAYMENT → CONFIRMED → PACKING →
 - Consume event từ RabbitMQ, render template (Thymeleaf), gửi qua Brevo/Resend (email), eSMS hoặc Zalo ZNS.
 - Chỉ gửi thông báo nghiệp vụ (đơn hàng, giao hàng, khuyến mãi). Email xác thực và quên mật khẩu do Keycloak gửi.
 - Lưu `notification_log` (idempotent theo `event_id`), retry với backoff, lỗi nhiều lần thì đẩy vào dead-letter queue.
+- MVP (E4): chỉ kênh email qua SMTP (`NotificationChannel` strategy, Mailpit local); template `templates/mail/*.html` dùng chung `_layout.html`; tiêu đề lấy từ `messages*.properties`. Zalo ZNS/SMS thêm bằng bean kênh mới.
 
 ---
 

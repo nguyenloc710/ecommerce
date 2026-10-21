@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{mail/_layout :: page('Đã giao thành công', ~{::content})}" lang="vi">
+<body>
+<th:block th:fragment="content">
+  <h1 style="font-family:Georgia,serif;font-weight:normal;font-size:24px;margin:16px 0 8px;">Đơn hàng đã giao thành công</h1>
+  <p>Đơn hàng <strong th:text="${orderCode}">ORD-000000-0000</strong> đã đến tay bạn. Mong rằng bạn hài lòng với sản phẩm.</p>
+  <p>Nếu có vấn đề với sản phẩm, bạn có thể yêu cầu đổi trả trong 7 ngày kể từ hôm nay (trừ sản phẩm đã khắc tên).</p>
+  <p style="margin:24px 0;">
+    <a th:href="${storefrontUrl + '/tai-khoan/don-hang/' + orderCode}" style="display:inline-block;padding:12px 28px;background:#1c1a17;color:#ffffff;text-decoration:none;letter-spacing:0.1em;font-size:13px;text-transform:uppercase;">Đánh giá sản phẩm</a>
+  </p>
+</th:block>
+</body>
+</html>
