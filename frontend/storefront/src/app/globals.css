@@ -13,6 +13,9 @@
   --sale: #a3231b;
   --gold: #8a6d33;
   --ok: #1d5c33;
+  /* Admin (UI-12) */
+  --admin-bg: #f6f6f7;
+  --admin-line: #e3e3e3;
 }
 
 @theme inline {
@@ -27,6 +30,8 @@
   --color-sale: var(--sale);
   --color-gold: var(--gold);
   --color-ok: var(--ok);
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-line: var(--admin-line);
 
   --font-sans: var(--font-be-vietnam-pro), system-ui, sans-serif;
   --font-display: var(--font-cormorant), Georgia, serif;
@@ -98,6 +103,49 @@ body {
     outline: none;
   }
   .input:focus {
+    border-color: var(--ink);
+  }
+  /* Thẻ trang quản trị (UI-12) */
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--admin-line);
+    border-radius: 12px;
+  }
+  .btn-admin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    cursor: pointer;
+  }
+  .btn-admin:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-admin-light {
+    background: var(--paper);
+    color: var(--ink);
+    border-color: var(--admin-line);
+  }
+  .input-admin {
+    width: 100%;
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 13px;
+    background: var(--paper);
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    outline: none;
+  }
+  .input-admin:focus {
     border-color: var(--ink);
   }
   /* Ô ảnh placeholder khi chưa có ảnh thật (UI-14) */

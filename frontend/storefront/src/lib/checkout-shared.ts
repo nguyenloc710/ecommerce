@@ -64,7 +64,7 @@ export type OrderView = {
   paidAt: string | null;
   cancelledAt: string | null;
   cancelReason: string | null;
-  items: { skuId: string; productSlug: string; productName: string; variantLabel: string; imageUrl: string | null; unitPrice: number; quantity: number; engraving: string | null; lineTotal: number }[];
+  items: { skuId: string; skuCode: string; productSlug: string; productName: string; variantLabel: string; imageUrl: string | null; unitPrice: number; quantity: number; engraving: string | null; lineTotal: number }[];
   history: { from: string | null; to: OrderStatus; reason: string | null; at: string }[];
   shipment: { carrier: string; trackingCode: string; status: string } | null;
 };

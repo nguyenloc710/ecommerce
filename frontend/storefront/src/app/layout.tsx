@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
-import { SiteHeader } from "@/components/site/site-header";
-import { SiteFooter } from "@/components/site/site-footer";
 
 // Font theo UI-03: tiêu đề Cormorant Garamond, nội dung Be Vietnam Pro, đều có subset tiếng Việt
 const beVietnamPro = Be_Vietnam_Pro({
@@ -33,11 +31,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={`${beVietnamPro.variable} ${cormorant.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">{children}</div>
-        <SiteFooter />
-      </body>
+      {/* Header/footer cửa hàng nằm ở (shop)/layout.tsx; /admin có khung riêng (UI-12) */}
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }
