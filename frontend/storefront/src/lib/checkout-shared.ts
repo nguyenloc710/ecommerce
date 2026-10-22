@@ -83,13 +83,14 @@ export type OrderSummary = {
   placedAt: string;
 };
 
-export const PAYMENT_METHODS = ["COD", "MOCK_ONLINE", "VNPAY"] as const;
+export const PAYMENT_METHODS = ["COD", "VNPAY", "MOMO", "MOCK_ONLINE"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const PAYMENT_LABELS: Record<PaymentMethod, { title: string; hint: string }> = {
   COD: { title: "Thanh toán khi nhận hàng (COD)", hint: "Trả tiền mặt cho nhân viên giao hàng" },
   MOCK_ONLINE: { title: "Thanh toán online (thử nghiệm)", hint: "Cổng thanh toán giả dùng khi phát triển" },
   VNPAY: { title: "VNPay", hint: "Thẻ ATM, QR ngân hàng, Visa/Master; chuyển sang trang VNPay để thanh toán" },
+  MOMO: { title: "Ví MoMo", hint: "Quét mã hoặc mở ứng dụng MoMo để thanh toán" },
 };
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

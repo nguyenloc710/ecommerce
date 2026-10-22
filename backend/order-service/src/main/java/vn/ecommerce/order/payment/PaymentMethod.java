@@ -10,7 +10,9 @@ public enum PaymentMethod {
     /** Cổng giả để test luồng online + webhook trước khi có VNPay/MoMo (B-18). */
     MOCK_ONLINE("mock", true),
     /** VNPay (E6.1): chỉ có bean khi bật {@code ecommerce.payment.vnpay.enabled}. */
-    VNPAY("vnpay", true);
+    VNPAY("vnpay", true),
+    /** MoMo (E6.2): chỉ có bean khi bật {@code ecommerce.payment.momo.enabled}. */
+    MOMO("momo", true);
 
     private final String slug;
     private final boolean online;

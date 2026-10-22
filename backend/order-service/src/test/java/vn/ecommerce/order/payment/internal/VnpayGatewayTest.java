@@ -37,7 +37,7 @@ class VnpayGatewayTest {
             "46621c68818f69871d25c59cfd6ea9228479c2f872a0e1c5d8ff9f197859a71910a572631b57a548060b453d62b0eff394b425b59dec30600028cd65331fc9c8";
 
     private final VnpayGateway gateway = new VnpayGateway(new PaymentProperties(null, new PaymentProperties.Vnpay(true, "DEMO1234", SECRET,
-            "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html", "http://localhost:3000/thanh-toan/ket-qua/{orderCode}", Duration.ofMinutes(15))),
+            "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html", "http://localhost:3000/thanh-toan/ket-qua/{orderCode}", Duration.ofMinutes(15)), null),
             CLOCK);
 
     @Test

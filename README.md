@@ -68,6 +68,8 @@ Storefront đọc biến môi trường từ `frontend/storefront/.env.local` (k
 
 VNPay ở order-service (mặc định tắt): `VNPAY_ENABLED=true`, `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET` (lấy ở sandbox.vnpayment.vn), `VNPAY_PAY_URL` (mặc định sandbox), `VNPAY_RETURN_URL` (mặc định `http://localhost:3000/thanh-toan/ket-qua/{orderCode}`). IPN URL khai báo với VNPay: `https://<gateway>/webhooks/payments/vnpay`.
 
+MoMo ở order-service (mặc định tắt): `MOMO_ENABLED=true`, `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`, `MOMO_ENDPOINT` (mặc định `https://test-payment.momo.vn`), `MOMO_IPN_URL` (URL public tới `/webhooks/payments/momo`), `MOMO_REDIRECT_URL`.
+
 ## Build và test
 
 ```bash

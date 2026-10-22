@@ -11,4 +11,6 @@ public final class PaymentErrorKeys {
     public static final String INVALID_SIGNATURE = "payment.invalid-signature";
     public static final String NOT_FOUND = "payment.not-found";
     public static final String AMOUNT_MISMATCH = "payment.amount-mismatch";
+    /** {0} = cổng (MOMO...). */
+    public static final String GATEWAY_UNAVAILABLE = "payment.gateway-unavailable";
 }

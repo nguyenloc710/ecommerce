@@ -26,8 +26,8 @@ class PaymentWebhookController {
 
     @PostMapping(value = "/webhooks/payments/{provider}", consumes = "application/json")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Cổng thanh toán báo kết quả", description = "`provider` = `mock` (VNPay/MoMo thêm ở E6). Header `X-Signature` = HMAC-SHA256(secret, body).")
-    void receive(@PathVariable String provider, @RequestHeader(SIGNATURE_HEADER) String signature, @RequestBody String rawBody) {
+    @Operation(summary = "Cổng thanh toán báo kết quả", description = "`provider` = `mock` (header `X-Signature` = HMAC-SHA256(secret, body)) hoặc `momo` (chữ ký nằm trong body). VNPay dùng GET riêng.")
+    void receive(@PathVariable String provider, @RequestHeader(value = SIGNATURE_HEADER, required = false) String signature, @RequestBody String rawBody) {
         PaymentMethod method = PaymentMethod.fromSlug(provider).orElseThrow(() -> new NotFoundException("payment.method-not-supported", provider));
         paymentService.handleWebhook(method, signature, rawBody);
     }
