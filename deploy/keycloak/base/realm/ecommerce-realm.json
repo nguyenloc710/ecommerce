@@ -2,6 +2,7 @@
   "realm": "ecommerce",
   "enabled": true,
   "displayName": "Ecommerce",
+  "loginTheme": "ecommerce",
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,
   "loginWithEmailAllowed": true,

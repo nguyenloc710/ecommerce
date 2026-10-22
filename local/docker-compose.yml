@@ -55,6 +55,8 @@ services:
       - "8180:8180" # Admin console: http://localhost:8180/admin (admin/admin)
     volumes:
       - ./keycloak/ecommerce-realm.json:/opt/keycloak/data/import/ecommerce-realm.json:ro
+      # Theme đăng nhập (E6.4): build bằng `npm run build-keycloak-theme` trong frontend/keycloak-theme; chưa build thì Keycloak dùng theme mặc định
+      - ../frontend/keycloak-theme/dist_keycloak:/opt/keycloak/providers:ro
     depends_on:
       postgres:
         condition: service_healthy

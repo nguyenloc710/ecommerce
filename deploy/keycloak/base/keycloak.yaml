@@ -3,14 +3,16 @@
 # - hostname là URL public: token luôn có iss = https://auth.<domain>/realms/ecommerce (service kiểm tra iss này)
 # - backchannelDynamic: service trong cluster gọi http://keycloak-service:8080 lấy JWKS/token
 # - TLS kết thúc ở Traefik (Ingress trong overlay), pod chạy HTTP và tin header X-Forwarded-*
-# TODO(E6.4): image tùy biến kèm theme Keycloakify tiếng Việt.
+# Image tùy biến (frontend/keycloak-theme/Dockerfile): Keycloak 26.7.5 + theme đăng nhập "ecommerce" (E6.4), đã chạy
+# kc.sh build (db postgres, health, metrics) nên operator khởi động ở chế độ optimized. CI cập nhật tag.
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
 metadata:
   name: keycloak
 spec:
   instances: 1
-  image: quay.io/keycloak/keycloak:26.7.5
+  image: ghcr.io/your-org/ecommerce/keycloak:0000000
+  startOptimized: true
   bootstrapAdmin:
     user:
       secret: keycloak-bootstrap-admin

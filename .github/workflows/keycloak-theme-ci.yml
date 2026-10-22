@@ -1,0 +1,59 @@
+name: keycloak-theme-ci
+
+on:
+  pull_request:
+    paths:
+      - "frontend/keycloak-theme/**"
+      - ".github/workflows/keycloak-theme-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/keycloak-theme/**"
+      - ".github/workflows/keycloak-theme-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/keycloak-theme
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/keycloak-theme/package-lock.json
+      # Keycloakify đóng gói jar bằng Maven (runner ubuntu có sẵn mvn) và cần JDK
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build-keycloak-theme
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keycloak-theme
+          path: frontend/keycloak-theme/dist_keycloak/keycloak-theme.jar
+
+  # Bật khi đã có registry: image Keycloak kèm theme (Dockerfile), tag = git SHA; cập nhật spec.image trong
+  # deploy/keycloak/base/keycloak.yaml (hoặc overlay) để Argo CD sync.
+  # image:
+  #   needs: build
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   permissions: { contents: read, packages: write }
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/download-artifact@v4
+  #       with: { name: keycloak-theme, path: frontend/keycloak-theme/dist_keycloak }
+  #     - uses: docker/login-action@v3
+  #       with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+  #     - uses: docker/build-push-action@v6
+  #       with:
+  #         context: frontend/keycloak-theme
+  #         push: true
+  #         tags: ghcr.io/${{ github.repository_owner }}/ecommerce/keycloak:${{ github.sha }}

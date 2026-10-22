@@ -1,0 +1,318 @@
+/* Trang đăng nhập theo nhận diện storefront (docs/decisions.md UI-01..UI-05): nền trắng, chữ gần đen, tiêu đề serif,
+   nút đen viết hoa giãn chữ, không bo góc, không bóng. */
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500&family=Cormorant+Garamond:wght@500;600&display=swap&subset=vietnamese");
+
+:root {
+  --ink: #111111;
+  --paper: #ffffff;
+  --bone: #f4f1ec;
+  --muted: #6b6b6b;
+  --line: #e5e5e5;
+  --sale: #a3231b;
+  --ok: #1d5c33;
+  --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+}
+
+.kc-html,
+.kc-body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.kc-login {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 64px;
+}
+
+/* Logo serif giữa, giống header storefront (UI-06) */
+.kc-header {
+  width: 100%;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: center;
+  margin-bottom: 56px;
+}
+.kc-brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 26px;
+  letter-spacing: 0.22em;
+  padding: 18px 0 18px 0.22em;
+  text-transform: uppercase;
+}
+
+.kc-card {
+  width: 100%;
+  max-width: 420px;
+}
+.kc-card-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+#kc-page-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.1;
+  margin: 0;
+}
+
+/* Chọn ngôn ngữ: chữ nhỏ góc phải */
+.kc-locale {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+#kc-locale-dropdown {
+  position: relative;
+}
+#kc-current-locale-link {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  font: inherit;
+  cursor: pointer;
+  padding: 0 0 2px;
+}
+.kc-locale-list {
+  display: none;
+  position: absolute;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  z-index: 10;
+  min-width: 140px;
+}
+#kc-locale-dropdown:hover .kc-locale-list,
+#kc-locale-dropdown:focus-within .kc-locale-list {
+  display: block;
+}
+.kc-locale-item {
+  display: block;
+  padding: 6px 12px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.kc-locale-item:hover {
+  background: var(--bone);
+}
+
+/* Biểu mẫu */
+.kc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.kc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* Trang Keycloak không bọc các nhóm trong flex container: tự tạo khoảng cách giữa các nhóm */
+.kc-group + .kc-group {
+  margin-top: 16px;
+}
+/* Hàng "Ghi nhớ đăng nhập" (trái) và "Quên mật khẩu?" (phải) */
+.kc-group.kc-settings {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.kc-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.kc-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 12px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  outline: none;
+}
+.kc-input:focus {
+  border-color: var(--ink);
+}
+.kc-input[aria-invalid="true"] {
+  border-color: var(--sale);
+}
+.kc-input-group {
+  display: flex;
+}
+.kc-input-group .kc-input {
+  flex: 1;
+}
+.kc-eye {
+  min-width: 56px;
+  border: 1px solid var(--line);
+  border-left: 0;
+  background: var(--paper);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+}
+/* Biểu tượng mắt của Keycloak dùng font icon (đã tắt CSS mặc định): hiện chữ thay thế */
+.kc-eye-show::before {
+  content: "Hiện";
+  font-style: normal;
+}
+.kc-eye-hide::before {
+  content: "Ẩn";
+  font-style: normal;
+}
+.kc-input-error {
+  color: var(--sale);
+  font-size: 12px;
+}
+.kc-help {
+  color: var(--muted);
+  font-size: 12px;
+}
+.required {
+  color: var(--sale);
+  margin-right: 2px;
+}
+
+.kc-options-wrapper,
+.kc-options,
+.kc-settings {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.kc-checkbox {
+  accent-color: var(--ink);
+  margin-right: 6px;
+}
+
+a {
+  color: var(--ink);
+  text-underline-offset: 3px;
+}
+
+/* Nút (UI-05): cao 52px, nền đen, chữ hoa giãn, hover đảo màu */
+.kc-buttons {
+  margin-top: 6px;
+}
+.kc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 52px;
+  padding: 0 32px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.kc-btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+.kc-btn-primary:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+.kc-btn-secondary {
+  background: var(--paper);
+  color: var(--ink);
+}
+.kc-btn-secondary:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.kc-btn-block {
+  width: 100%;
+}
+
+/* Thông báo */
+.kc-alert {
+  border: 1px solid var(--line);
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+.alert-error {
+  border-color: var(--sale);
+  color: var(--sale);
+}
+.alert-success {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.alert-warning,
+.alert-info {
+  background: var(--bone);
+  border-color: var(--bone);
+}
+
+.kc-signup {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: 13px;
+}
+
+/* Đăng nhập bằng mạng xã hội (Google, E6.4 khi có OAuth client) */
+.kc-social {
+  margin-top: 24px;
+}
+.kc-social-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Tooltip "đăng nhập lại" khi đã nhập email ở bước trước */
+#kc-username {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.kc-tooltip-text {
+  font-size: 12px;
+  border-bottom: 1px solid currentColor;
+}
+
+@media (max-width: 480px) {
+  #kc-page-title {
+    font-size: 32px;
+  }
+  .kc-header {
+    margin-bottom: 36px;
+  }
+}
