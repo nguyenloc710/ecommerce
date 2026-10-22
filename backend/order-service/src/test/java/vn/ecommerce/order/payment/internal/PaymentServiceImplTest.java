@@ -38,7 +38,7 @@ class PaymentServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        PaymentProperties props = new PaymentProperties(new PaymentProperties.Mock(SECRET, "http://localhost:3000/thanh-toan/mock/{orderId}?ma={orderCode}"), null, null);
+        PaymentProperties props = new PaymentProperties(new PaymentProperties.Mock(true, SECRET, "http://localhost:3000/thanh-toan/mock/{orderId}?ma={orderCode}"), null, null);
         PaymentGatewayRegistry registry = new PaymentGatewayRegistry(List.of(new CodGateway(), new MockOnlineGateway(props, JsonMapper.builder().build())));
         service = new PaymentServiceImpl(payments, registry, orders);
     }

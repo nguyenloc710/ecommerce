@@ -11,7 +11,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ecommerce.payment")
 public record PaymentProperties(Mock mock, Vnpay vnpay, Momo momo) {
 
-    public record Mock(String secret, String payUrlTemplate) {
+    /** @param enabled tắt ở production (cổng giả chỉ để dev/staging thử luồng online) */
+    public record Mock(boolean enabled, String secret, String payUrlTemplate) {
     }
 
     /**

@@ -1,0 +1,7 @@
+# Storefront của một môi trường; overlay đặt namespace, image tag, URL và số replica.
+# Secret storefront-secrets (AUTH_SECRET, AUTH_KEYCLOAK_SECRET, REVALIDATE_SECRET, PAYMENT_MOCK_SECRET ở staging)
+# sinh bằng deploy/secrets/seal-env.sh.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml

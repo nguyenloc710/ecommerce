@@ -84,6 +84,27 @@ spec:
       prune: true
       selfHeal: true
 ---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: storefront-staging
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/storefront/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
 # Mỗi service Spring Boot một Application: chart chung deploy/charts/spring-service + values môi trường
 # (CI cập nhật image.tag trong deploy/environments/staging/<service>.yaml).
 apiVersion: argoproj.io/v1alpha1

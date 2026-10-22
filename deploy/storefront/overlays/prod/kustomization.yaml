@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prod
+resources:
+  - ../../base
+  - pdb.yaml
+# CI cập nhật newTag (= <git sha>-prod, image build với NEXT_PUBLIC_SITE_URL=https://shop.example.vn)
+images:
+  - name: ghcr.io/your-org/ecommerce/storefront
+    newTag: "0000000-prod"
+replicas:
+  - name: storefront
+    count: 2
+configMapGenerator:
+  - name: storefront-config
+    literals:
+      - API_BASE_URL=http://gateway:8080
+      - AUTH_URL=https://shop.example.vn
+      - AUTH_TRUST_HOST=true
+      - AUTH_KEYCLOAK_ID=storefront-web
+      # Server storefront gọi Keycloak qua URL public để token khớp iss (hostname của Keycloak)
+      - AUTH_KEYCLOAK_ISSUER=https://auth.example.vn/realms/ecommerce
+      - NEXT_PUBLIC_SITE_URL=https://shop.example.vn

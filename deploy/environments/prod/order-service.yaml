@@ -30,6 +30,14 @@ env:
   RABBITMQ_HOST: rabbitmq
   CATALOG_BASE_URL: http://catalog-service:8080
   KEYCLOAK_TOKEN_URI: http://keycloak-service:8080/realms/ecommerce/protocol/openid-connect/token
+  # Cổng thanh toán giả chỉ dùng ở dev/staging
+  PAYMENT_MOCK_ENABLED: "false"
+  # VNPay/MoMo bật khi có credential (B-24, B-25); secret nằm trong order-service-secrets
+  VNPAY_ENABLED: "false"
+  VNPAY_RETURN_URL: https://shop.example.vn/thanh-toan/ket-qua/{orderCode}
+  MOMO_ENABLED: "false"
+  MOMO_REDIRECT_URL: https://shop.example.vn/thanh-toan/ket-qua/{orderCode}
+  MOMO_IPN_URL: https://api.example.vn/webhooks/payments/momo
 
 # SealedSecret cung cấp DB_USERNAME/DB_PASSWORD, RABBITMQ_*, KEYCLOAK_CLIENT_SECRET...
 envFromSecrets:

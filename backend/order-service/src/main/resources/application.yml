@@ -94,6 +94,7 @@ ecommerce:
       secret: ${SHIPPING_MOCK_SECRET:shipping-mock-dev-secret}
   payment:
     mock:
+      enabled: ${PAYMENT_MOCK_ENABLED:true}
       secret: ${PAYMENT_MOCK_SECRET:payment-mock-dev-secret}
       pay-url-template: ${PAYMENT_MOCK_PAY_URL:http://localhost:3000/thanh-toan/mock/{orderId}?ma={orderCode}}
     # E6.1, P-03: tắt mặc định; bật khi có tmnCode/hashSecret (sandbox: sandbox.vnpayment.vn)

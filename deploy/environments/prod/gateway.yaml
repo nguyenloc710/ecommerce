@@ -36,6 +36,8 @@ env:
 envFromSecrets: []
 
 networkPolicy:
-  ingressFrom: []
+  # storefront gọi API từ phía server (BFF)
+  ingressFrom:
+    - storefront
   ingressFromNamespaces:
     - kube-system

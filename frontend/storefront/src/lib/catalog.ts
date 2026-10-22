@@ -50,7 +50,15 @@ export async function listProducts(params: ListingParams): Promise<PageView<Prod
   "use cache";
   cacheLife("minutes");
   cacheTag(CATALOG_CACHE_TAG);
-  return apiFetch<PageView<ProductCardView>>(`/api/products${buildListingQuery(params)}`);
+  try {
+    return await apiFetch<PageView<ProductCardView>>(`/api/products${buildListingQuery(params)}`);
+  } catch (error) {
+    // Lỗi nghiệp vụ (404 danh mục sai) vẫn ném cho trang xử lý; mất kết nối (lúc build image, backend khởi động lại)
+    // thì trả trang rỗng, cache tự làm mới sau cacheLife
+    if (error instanceof ApiError) throw error;
+    console.warn("[catalog] không lấy được danh sách sản phẩm:", (error as Error).message);
+    return { items: [], page: 0, size: params.size, total: 0, hasNext: false };
+  }
 }
 
 export async function getFacets(category?: string, brand?: string, q?: string): Promise<FacetsView> {

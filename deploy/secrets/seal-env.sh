@@ -61,13 +61,21 @@ seal customer-service-secrets Opaque "DB_USERNAME=customer" "DB_PASSWORD=${DB_PA
   RABBITMQ_USERNAME=ecommerce "RABBITMQ_PASSWORD=$RABBIT_PASS" "KEYCLOAK_CLIENT_SECRET=$CUSTOMER_CLIENT_SECRET"
 seal catalog-service-secrets Opaque "DB_USERNAME=catalog" "DB_PASSWORD=${DB_PASS[catalog]}" \
   RABBITMQ_USERNAME=ecommerce "RABBITMQ_PASSWORD=$RABBIT_PASS"
+PAYMENT_MOCK_SECRET="$(rand)"
 seal order-service-secrets Opaque "DB_USERNAME=orders" "DB_PASSWORD=${DB_PASS[order]}" \
   RABBITMQ_USERNAME=ecommerce "RABBITMQ_PASSWORD=$RABBIT_PASS" "KEYCLOAK_CLIENT_SECRET=$ORDER_CLIENT_SECRET" \
-  "PAYMENT_MOCK_SECRET=$(rand)" "SHIPPING_MOCK_SECRET=$(rand)" \
+  "PAYMENT_MOCK_SECRET=$PAYMENT_MOCK_SECRET" "SHIPPING_MOCK_SECRET=$(rand)" \
   "VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET:-}" "MOMO_ACCESS_KEY=${MOMO_ACCESS_KEY:-}" "MOMO_SECRET_KEY=${MOMO_SECRET_KEY:-}"
 seal notification-service-secrets Opaque "DB_USERNAME=notification" "DB_PASSWORD=${DB_PASS[notification]}" \
   RABBITMQ_USERNAME=ecommerce "RABBITMQ_PASSWORD=$RABBIT_PASS" \
   "SMTP_USERNAME=${SMTP_USERNAME:-}" "SMTP_PASSWORD=${SMTP_PASSWORD:-}"
+
+# Storefront (BFF): khóa cookie session, secret client storefront-web (trùng realm), secret revalidate.
+# Cổng thanh toán giả chỉ ở staging (prod đặt PAYMENT_MOCK_ENABLED=false nên storefront không cần secret này).
+STOREFRONT_EXTRA=()
+[ "$ENV" = staging ] && STOREFRONT_EXTRA+=("PAYMENT_MOCK_SECRET=$PAYMENT_MOCK_SECRET")
+seal storefront-secrets Opaque "AUTH_SECRET=$(openssl rand -base64 32)" "AUTH_KEYCLOAK_SECRET=$STOREFRONT_SECRET" \
+  "REVALIDATE_SECRET=$(rand)" "${STOREFRONT_EXTRA[@]}"
 
 # Danh sách file cho kustomization của môi trường
 ( cd "$OUT" && { echo "apiVersion: kustomize.config.k8s.io/v1beta1"; echo "kind: Kustomization"; echo "resources:"; \

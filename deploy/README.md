@@ -10,10 +10,11 @@ Manifest cho k3s, quản lý theo GitOps (Argo CD đồng bộ từ thư mục n
 | `data/` | CloudNativePG cluster `pg` + 5 database + backup R2 (plugin Barman Cloud), RabbitMQ, Valkey; overlay `prod`/`staging` |
 | `keycloak/` | Keycloak Operator theo namespace, CR `Keycloak`, realm as code (`base/realm`, keycloak-config-cli), Ingress chỉ mở `/realms`, `/resources` |
 | `ingress/` | Ingress public mỗi môi trường: `api.<domain>` → gateway, `shop.<domain>` → storefront |
+| `storefront/` | Next.js (BFF): Deployment read-only + emptyDir cache, Service, NetworkPolicy, PDB prod; image build theo `frontend/storefront/Dockerfile`, tag `<sha>-<env>` |
 | `charts/spring-service/` | Helm chart dùng chung cho mọi service Spring Boot (ApplicationSet `services-<env>` dùng chart này + values) |
 | `environments/{staging,prod}/` | Values từng service theo môi trường; CI cập nhật `image.tag` |
 
-Chưa có: chart/image storefront (Service `storefront` trong Ingress chưa tồn tại), theme Keycloakify (E6.4), Grafana Alloy.
+Chưa có: theme Keycloakify (E6.4), Grafana Alloy.
 
 ## Quy ước tên trong mỗi namespace môi trường (`staging`, `prod`)
 

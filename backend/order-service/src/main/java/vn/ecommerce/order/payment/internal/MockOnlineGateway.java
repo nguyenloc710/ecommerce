@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 import vn.ecommerce.common.web.security.HmacSignatures;
@@ -16,6 +17,8 @@ import vn.ecommerce.order.payment.PaymentRequest;
  */
 @Component
 @RequiredArgsConstructor
+// Production đặt PAYMENT_MOCK_ENABLED=false để khách không chọn được cổng giả; mặc định bật cho dev/staging
+@ConditionalOnProperty(prefix = "ecommerce.payment.mock", name = "enabled", havingValue = "true", matchIfMissing = true)
 class MockOnlineGateway implements PaymentGateway {
 
     static final String STATUS_SUCCESS = "SUCCESS";

@@ -70,7 +70,7 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 - [ ] E6.3 GHN/GHTK thật qua `ShippingCarrier`. **Đang chặn:** máy dev không truy cập được api.ghn.vn/api.ghtk.vn để đọc tài liệu hiện hành; API đổi theo địa giới 2 cấp (2025), GHN dùng mã phường riêng phải lấy bằng token. Cần token + tài liệu của chủ shop. Khi làm: mở rộng `ShippingCarrier.createTracking` nhận thông tin người nhận/hàng/COD, thêm địa chỉ lấy hàng của shop vào cấu hình
 - [ ] E6.4 Keycloak theme Keycloakify tiếng Việt; Google login
 - [x] E6.5 Realm as code (`deploy/keycloak`), CNPG, RabbitMQ, Valkey manifest, Argo CD app-of-apps, Sealed Secrets (B-26). Đã kiểm tra `kubectl kustomize` mọi thư mục + parse YAML; **chưa apply lên cluster thật** (chưa có VPS)
-- [ ] E6.7 Storefront lên cluster: Dockerfile/Jib-tương đương cho Next.js standalone, chart hoặc manifest `storefront` (probe, non-root, read-only FS, NetworkPolicy), biến AUTH_* qua SealedSecret, thêm vào ApplicationSet
+- [x] E6.7 Storefront lên cluster (B-27): Dockerfile standalone (build riêng từng môi trường), `deploy/storefront` (probe `/api/health`, non-root, read-only FS + emptyDir cache, NetworkPolicy, PDB prod), `storefront-secrets` trong seal-env.sh, Application Argo CD, workflow `storefront-ci`; order-service có `PAYMENT_MOCK_ENABLED` (prod tắt). Đã chạy thử image read-only/uid 1000; chưa chạy trên cluster
 - [ ] E6.6 Load test checkout, thử restore backup, checklist go-live mục 17 thiết kế
 
 ## E7. Tăng trưởng

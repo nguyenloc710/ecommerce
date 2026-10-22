@@ -1,0 +1,64 @@
+name: storefront-ci
+
+on:
+  pull_request:
+    paths:
+      - "frontend/storefront/**"
+      - ".github/workflows/storefront-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/storefront/**"
+      - ".github/workflows/storefront-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storefront-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/storefront
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/storefront/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      # Không có backend trong CI: trang dùng dữ liệu dự phòng, cache tự làm mới khi chạy thật
+      - run: npm run build
+
+  # Bật khi đã có registry. Image build riêng từng môi trường (URL site chốt lúc build), tag = <sha>-<env>;
+  # sau đó cập nhật images.newTag trong deploy/storefront/overlays/<env> để Argo CD sync.
+  # image:
+  #   needs: verify
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - env: staging
+  #           site: https://shop-staging.example.vn
+  #         - env: prod
+  #           site: https://shop.example.vn
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: docker/login-action@v3
+  #       with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+  #     - uses: docker/build-push-action@v6
+  #       with:
+  #         context: frontend/storefront
+  #         push: true
+  #         build-args: NEXT_PUBLIC_SITE_URL=${{ matrix.site }}
+  #         tags: ghcr.io/${{ github.repository_owner }}/ecommerce/storefront:${{ github.sha }}-${{ matrix.env }}
