@@ -1,0 +1,33 @@
+# Chứng chỉ Let's Encrypt qua HTTP-01 với Traefik (k3s có sẵn). Domain sau Cloudflare proxy: bật
+# "SSL/TLS: Full (strict)" và để Cloudflare không chặn /.well-known/acme-challenge/.
+# TODO(go-live): thay email liên hệ.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@example.vn
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: traefik
+---
+# Dùng cho staging khi thử, tránh giới hạn tần suất của Let's Encrypt production
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: admin@example.vn
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: traefik

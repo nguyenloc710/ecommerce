@@ -1,0 +1,39 @@
+# Staging (thiết kế 9.2): 1 instance 512 MB, RabbitMQ/Valkey nhỏ hơn. Vẫn backup (nơi thử restore hằng tháng).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: staging
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: ObjectStore
+      name: r2-backup
+    patch: |-
+      - op: replace
+        path: /spec/configuration/destinationPath
+        value: s3://ecommerce-backup/staging
+      - op: replace
+        path: /spec/retentionPolicy
+        value: "7d"
+  - target:
+      kind: StatefulSet
+      name: rabbitmq
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 256Mi
+  - target:
+      kind: Deployment
+      name: valkey
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 128Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value: ["--save", "", "--appendonly", "no", "--maxmemory", "100mb", "--maxmemory-policy", "allkeys-lru"]

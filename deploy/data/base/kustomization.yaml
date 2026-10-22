@@ -1,0 +1,12 @@
+# Dữ liệu của một môi trường (namespace do overlay đặt): PostgreSQL (CloudNativePG + backup R2), RabbitMQ, Valkey.
+# Secret cần có trước (SealedSecret, xem deploy/secrets/README.md): pg-<db>-credentials, r2-backup-credentials,
+# rabbitmq-credentials.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - postgres-cluster.yaml
+  - postgres-databases.yaml
+  - postgres-backup.yaml
+  - rabbitmq.yaml
+  - valkey.yaml
+  - networkpolicy.yaml

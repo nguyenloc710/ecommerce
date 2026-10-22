@@ -1,0 +1,70 @@
+# Mở đúng nguồn được gọi vào thành phần dữ liệu (namespace có default-deny-ingress, deploy/platform).
+# PostgreSQL: service dùng DB + Keycloak + chính CNPG (replica, operator ở namespace platform).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pg
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: pg
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [customer-service, catalog-service, order-service, notification-service]
+        # Pod do Keycloak Operator tạo mang nhãn app=keycloak
+        - podSelector:
+            matchLabels:
+              app: keycloak
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: pg
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: platform
+      ports:
+        - port: 5432
+        - port: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rabbitmq
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [customer-service, catalog-service, order-service, notification-service]
+      ports:
+        - port: 5672
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: valkey
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: valkey
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gateway
+      ports:
+        - port: 6379

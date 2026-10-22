@@ -1,0 +1,69 @@
+# Thiết kế mục 9.5: một cluster CloudNativePG cho cả môi trường, mỗi service (và Keycloak) một database + user riêng.
+# Service đọc/ghi qua Service "pg-rw" do CNPG tạo từ tên cluster "pg".
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg
+spec:
+  instances: 1
+  # PostgreSQL 17 khớp môi trường dev (local/docker-compose.yml); nâng major phải làm theo quy trình riêng
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-standard-trixie
+  primaryUpdateStrategy: unsupervised
+  # Primary và replica nằm trên node khác nhau
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: required
+  storage:
+    storageClass: local-path
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 512Mi
+  postgresql:
+    parameters:
+      timezone: UTC
+      max_connections: "200"
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+  # User của từng service; mật khẩu lấy từ Secret basic-auth (SealedSecret), CNPG tự đồng bộ khi đổi
+  managed:
+    roles:
+      - name: customer
+        ensure: present
+        login: true
+        passwordSecret:
+          name: pg-customer-credentials
+      - name: catalog
+        ensure: present
+        login: true
+        passwordSecret:
+          name: pg-catalog-credentials
+      - name: orders
+        ensure: present
+        login: true
+        passwordSecret:
+          name: pg-order-credentials
+      - name: notification
+        ensure: present
+        login: true
+        passwordSecret:
+          name: pg-notification-credentials
+      - name: keycloak
+        ensure: present
+        login: true
+        passwordSecret:
+          name: pg-keycloak-credentials
+  # Backup + WAL archive qua plugin Barman Cloud (ObjectStore "r2-backup" trong postgres-backup.yaml)
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: r2-backup
+  monitoring:
+    enablePodMonitor: false

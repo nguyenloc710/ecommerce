@@ -1,0 +1,32 @@
+# Prod (thiết kế 9.2): PostgreSQL 2 instance trên 2 node (tự failover), 1,5 GB mỗi instance.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prod
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: Cluster
+      name: pg
+    patch: |-
+      - op: replace
+        path: /spec/instances
+        value: 2
+      - op: replace
+        path: /spec/storage/size
+        value: 20Gi
+      - op: replace
+        path: /spec/resources
+        value:
+          requests:
+            cpu: 500m
+            memory: 1536Mi
+          limits:
+            memory: 1536Mi
+  - target:
+      kind: ObjectStore
+      name: r2-backup
+    patch: |-
+      - op: replace
+        path: /spec/configuration/destinationPath
+        value: s3://ecommerce-backup/prod

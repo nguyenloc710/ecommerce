@@ -1,0 +1,35 @@
+# Keycloak staging: 1 instance 768 MB, host auth-staging.<domain> (subdomain một cấp, khớp chứng chỉ Cloudflare), chứng chỉ Let's Encrypt staging.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: staging
+resources:
+  - ../../base
+patches:
+  # ClusterRoleBinding là tài nguyên cấp cluster: tên riêng theo môi trường
+  - target:
+      kind: ClusterRoleBinding
+      name: keycloak-operator-clusterrole-binding
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: keycloak-operator-clusterrole-binding-staging
+  - target:
+      kind: Keycloak
+      name: keycloak
+    patch: |-
+      - op: replace
+        path: /spec/hostname/hostname
+        value: https://auth-staging.example.vn
+  - target:
+      kind: Ingress
+      name: keycloak
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt-staging
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: auth-staging.example.vn
+      - op: replace
+        path: /spec/rules/0/host
+        value: auth-staging.example.vn

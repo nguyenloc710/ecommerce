@@ -1,0 +1,20 @@
+# Mỗi môi trường một namespace chứa cả service, Keycloak và dữ liệu (pg-rw, rabbitmq, valkey cùng namespace,
+# xem deploy/README.md). platform chứa operator và công cụ dùng chung.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    ecommerce/environment: staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+  labels:
+    ecommerce/environment: prod

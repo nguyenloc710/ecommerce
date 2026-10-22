@@ -109,7 +109,7 @@ Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-sta
 - `deploy/charts/spring-service` là chart dùng chung cho cả 5 service. `deploy/environments/{staging,prod}/<service>.yaml` là values riêng; CI cập nhật `image.tag` (git SHA).
 - Tên Service trong namespace môi trường: `pg-rw`, `rabbitmq`, `valkey`, `keycloak-service`, secret `<service>-secrets` (xem `deploy/README.md`).
 - Image build bằng Jib (`./mvnw package jib:build -Dimage.registry=... -Dimage.tag=...`), không cần Dockerfile.
-- `deploy/{keycloak,data,platform,argocd}` và `infra/k3s` mới là thư mục trống.
+- GitOps (E6.5, B-26): `deploy/argocd` app-of-apps → `platform` (operator Helm ghim bản), `secrets/<env>` (SealedSecret sinh bằng `secrets/seal-env.sh`), `data/overlays/<env>` (CNPG `pg` + backup R2, RabbitMQ, Valkey), `keycloak/overlays/<env>` (operator theo namespace, realm as code), `ingress/<env>`, ApplicationSet service. Kiểm tra bằng `kubectl kustomize <dir>`; không apply lên cluster khi chưa được yêu cầu. Realm prod sinh từ realm dev bằng `node deploy/keycloak/base/realm/build-realm.mjs` (chạy lại mỗi khi sửa realm dev). `infra/k3s` vẫn trống.
 - Placeholder cần thay: registry `ghcr.io/your-org`, domain `example.vn`.
 
 ## Frontend

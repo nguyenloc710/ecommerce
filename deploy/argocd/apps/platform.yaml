@@ -1,0 +1,135 @@
+# Operator và công cụ dùng chung (namespace platform). Phiên bản ghim cụ thể; nâng cấp bằng PR đổi targetRevision.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.21.2
+    helm:
+      valuesObject:
+        crds:
+          enabled: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# kubeseal cần --controller-namespace platform --controller-name sealed-secrets-controller
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sealed-secrets
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  source:
+    repoURL: https://bitnami.github.io/sealed-secrets
+    chart: sealed-secrets
+    targetRevision: 2.20.0
+    helm:
+      valuesObject:
+        fullnameOverride: sealed-secrets-controller
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# CloudNativePG operator 1.30.1 (chart 0.29.1), quản lý Cluster ở mọi namespace
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudnative-pg
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  source:
+    repoURL: https://cloudnative-pg.github.io/charts
+    chart: cloudnative-pg
+    targetRevision: 0.29.1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# Plugin backup Barman Cloud (chart 0.8.1, plugin v0.15.1): phải cùng namespace với operator CNPG, cần cert-manager
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: plugin-barman-cloud
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  source:
+    repoURL: https://cloudnative-pg.github.io/charts
+    chart: plugin-barman-cloud
+    targetRevision: 0.8.1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+---
+# Namespace, ClusterIssuer, NetworkPolicy default-deny, CRD/ClusterRole của Keycloak Operator
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-base
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/platform
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

@@ -1,0 +1,36 @@
+# Thiết kế 9.5: base backup hằng ngày + WAL liên tục lên Cloudflare R2 (S3-compatible), giữ 14 ngày, cho phép PITR.
+# Overlay đặt destinationPath riêng cho từng môi trường. TODO(go-live): thay <account-id> và tên bucket.
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: r2-backup
+spec:
+  retentionPolicy: "14d"
+  configuration:
+    destinationPath: s3://ecommerce-backup/ENV
+    endpointURL: https://ACCOUNT_ID.r2.cloudflarestorage.com
+    s3Credentials:
+      accessKeyId:
+        name: r2-backup-credentials
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: r2-backup-credentials
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: pg-daily
+spec:
+  # 02:00 giờ Việt Nam (19:00 UTC), định dạng cron 6 trường có giây
+  schedule: "0 0 19 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: pg
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io

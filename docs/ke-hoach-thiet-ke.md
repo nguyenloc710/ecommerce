@@ -343,7 +343,7 @@ Trạng thái đơn: `PENDING → AWAITING_PAYMENT → CONFIRMED → PACKING →
 | Nhà cung cấp | VPS trong nước (Viettel IDC, VNPT, BizFly, ...) để độ trễ tới khách Việt Nam thấp; hoặc Hetzner/DigitalOcean nếu muốn rẻ hoặc cần managed |
 | Ingress | Traefik (có sẵn) + cert-manager |
 | Lưu trữ | `local-path` (có sẵn) cho PostgreSQL; nhân bản dữ liệu do CloudNativePG lo (primary + replica nằm trên 2 node khác nhau) |
-| Namespace | `prod`, `staging`, `data`, `platform` (argocd, cert-manager, sealed-secrets, alloy, keycloak-operator) |
+| Namespace | `prod`, `staging` (mỗi môi trường chứa luôn dữ liệu `pg-rw`/`rabbitmq`/`valkey` và Keycloak + Keycloak Operator của nó), `platform` (cert-manager, sealed-secrets, CloudNativePG + plugin Barman Cloud, alloy), `argocd`. Manifest ở `deploy/`, xem B-26 |
 
 **Phương án thay thế:** managed K8s có control plane miễn phí (DigitalOcean DOKS, Linode LKE, Vultr VKE). Đỡ công vận hành nhưng đắt hơn khoảng 1,5–2 lần.
 

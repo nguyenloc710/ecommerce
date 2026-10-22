@@ -67,9 +67,10 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 
 - [ ] E6.1 VNPay thật (sandbox trước) qua `PaymentGateway`. **Code xong** (B-24): `VnpayGateway` (2.1.0, HMAC-SHA512), IPN `GET /webhooks/payments/vnpay`, storefront chọn VNPay khi bật + trang `/thanh-toan/ket-qua/{code}`; đã thử đầu cuối với credential giả + IPN tự ký. **Còn:** tmnCode/hashSecret sandbox của chủ shop để thử với VNPay thật, rồi khai báo IPN URL public trong trang quản trị VNPay
 - [ ] E6.2 MoMo thật qua `PaymentGateway`. **Code xong** (B-25): `MomoGateway` (API v2 `/v2/gateway/api/create`, HMAC-SHA256), IPN `POST /webhooks/payments/momo` (chữ ký trong body), test với MockRestServiceServer + chữ ký đối chiếu. **Còn:** partnerCode/accessKey/secretKey môi trường test của chủ shop để thử với MoMo thật
-- [ ] E6.3 GHN/GHTK thật qua `ShippingCarrier`
+- [ ] E6.3 GHN/GHTK thật qua `ShippingCarrier`. **Đang chặn:** máy dev không truy cập được api.ghn.vn/api.ghtk.vn để đọc tài liệu hiện hành; API đổi theo địa giới 2 cấp (2025), GHN dùng mã phường riêng phải lấy bằng token. Cần token + tài liệu của chủ shop. Khi làm: mở rộng `ShippingCarrier.createTracking` nhận thông tin người nhận/hàng/COD, thêm địa chỉ lấy hàng của shop vào cấu hình
 - [ ] E6.4 Keycloak theme Keycloakify tiếng Việt; Google login
-- [ ] E6.5 Realm as code (`deploy/keycloak`), CNPG, RabbitMQ, Valkey manifest, Argo CD app-of-apps, Sealed Secrets
+- [x] E6.5 Realm as code (`deploy/keycloak`), CNPG, RabbitMQ, Valkey manifest, Argo CD app-of-apps, Sealed Secrets (B-26). Đã kiểm tra `kubectl kustomize` mọi thư mục + parse YAML; **chưa apply lên cluster thật** (chưa có VPS)
+- [ ] E6.7 Storefront lên cluster: Dockerfile/Jib-tương đương cho Next.js standalone, chart hoặc manifest `storefront` (probe, non-root, read-only FS, NetworkPolicy), biến AUTH_* qua SealedSecret, thêm vào ApplicationSet
 - [ ] E6.6 Load test checkout, thử restore backup, checklist go-live mục 17 thiết kế
 
 ## E7. Tăng trưởng

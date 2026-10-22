@@ -1,0 +1,43 @@
+# Cửa vào public của môi trường staging (TLS kết thúc ở Traefik, cert-manager cấp chứng chỉ).
+# - api-staging.example.vn → gateway: API cho storefront phía trình duyệt và webhook đối tác (VNPay/MoMo IPN, hãng vận chuyển)
+# - shop-staging.example.vn → storefront (Service "storefront" có khi chart storefront được thêm, xem backlog)
+# Auth (auth-staging.example.vn) nằm ở deploy/keycloak. TODO(go-live): thay example.vn bằng domain thật.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts: [api-staging.example.vn, shop-staging.example.vn]
+      secretName: public-tls
+  rules:
+    - host: api-staging.example.vn
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http
+          - path: /webhooks
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http
+    - host: shop-staging.example.vn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: storefront
+                port:
+                  name: http

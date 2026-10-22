@@ -1,0 +1,29 @@
+# Keycloak nhận traffic từ Traefik (trang đăng nhập public), các service (JWKS/token), storefront (đổi code, refresh),
+# Job áp dụng realm, và Alloy (metrics). Admin console không mở ra ngoài: Ingress chỉ route /realms và /resources.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: keycloak
+spec:
+  podSelector:
+    matchLabels:
+      app: keycloak
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: platform
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [gateway, customer-service, catalog-service, order-service, notification-service, storefront, keycloak-realm-import]
+        # Các instance Keycloak nói chuyện với nhau (cache Infinispan)
+        - podSelector:
+            matchLabels:
+              app: keycloak

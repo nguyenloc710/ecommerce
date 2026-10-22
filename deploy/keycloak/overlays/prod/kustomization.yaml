@@ -1,0 +1,33 @@
+# Keycloak prod (thiết kế 9.2): 2 instance x 1 GB. TODO(go-live): thay example.vn bằng domain thật.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prod
+resources:
+  - ../../base
+patches:
+  # ClusterRoleBinding là tài nguyên cấp cluster: tên riêng theo môi trường
+  - target:
+      kind: ClusterRoleBinding
+      name: keycloak-operator-clusterrole-binding
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: keycloak-operator-clusterrole-binding-prod
+  - target:
+      kind: Keycloak
+      name: keycloak
+    patch: |-
+      - op: replace
+        path: /spec/instances
+        value: 2
+      - op: replace
+        path: /spec/hostname/hostname
+        value: https://auth.example.vn
+      - op: replace
+        path: /spec/resources
+        value:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            memory: 1Gi

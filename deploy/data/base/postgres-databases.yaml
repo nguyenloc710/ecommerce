@@ -1,0 +1,56 @@
+# Database khai báo (CNPG Database CR); tên khớp DB_URL trong deploy/environments/<env>/<service>.yaml.
+# reclaimPolicy retain: xóa CR không xóa dữ liệu.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: customer-db
+spec:
+  cluster:
+    name: pg
+  name: customer_db
+  owner: customer
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: catalog-db
+spec:
+  cluster:
+    name: pg
+  name: catalog_db
+  owner: catalog
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: order-db
+spec:
+  cluster:
+    name: pg
+  name: order_db
+  owner: orders
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: notification-db
+spec:
+  cluster:
+    name: pg
+  name: notification_db
+  owner: notification
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: keycloak-db
+spec:
+  cluster:
+    name: pg
+  name: keycloak_db
+  owner: keycloak
+  databaseReclaimPolicy: retain

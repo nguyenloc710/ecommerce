@@ -1,0 +1,129 @@
+# Môi trường staging: SealedSecret → dữ liệu → Keycloak → service + ingress (sync-wave).
+# Staging: tự đồng bộ và dọn tài nguyên thừa.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: secrets-staging
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/secrets/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: data-staging
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/data/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak-staging
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/keycloak/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-staging
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/ingress/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# Mỗi service Spring Boot một Application: chart chung deploy/charts/spring-service + values môi trường
+# (CI cập nhật image.tag trong deploy/environments/staging/<service>.yaml).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: services-staging
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          - service: gateway
+          - service: customer-service
+          - service: catalog-service
+          - service: order-service
+          - service: notification-service
+  template:
+    metadata:
+      name: "{{.service}}-staging"
+    spec:
+      project: default
+      sources:
+        - repoURL: https://github.com/nguyenloc710/ecommerce.git
+          targetRevision: main
+          path: deploy/charts/spring-service
+          helm:
+            releaseName: "{{.service}}"
+            valueFiles:
+              - $values/deploy/environments/staging/{{.service}}.yaml
+        - repoURL: https://github.com/nguyenloc710/ecommerce.git
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: staging
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

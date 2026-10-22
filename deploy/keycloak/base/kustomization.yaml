@@ -1,0 +1,16 @@
+# Keycloak của một môi trường: operator, CR Keycloak (DB keycloak_db trên pg-rw), realm as code áp dụng bằng
+# keycloak-config-cli sau mỗi lần Argo CD sync. Overlay đặt namespace, hostname, số instance.
+# Secret cần có trước (SealedSecret): pg-keycloak-credentials, keycloak-bootstrap-admin, keycloak-realm-secrets.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../operator
+  - keycloak.yaml
+  - realm-import-job.yaml
+  - networkpolicy.yaml
+  - ingress.yaml
+configMapGenerator:
+  # Sinh bằng realm/build-realm.mjs từ realm dev; hậu tố hash làm Job áp dụng lại khi realm đổi
+  - name: keycloak-realm
+    files:
+      - realm/ecommerce-realm.json

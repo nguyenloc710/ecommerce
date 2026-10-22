@@ -1,0 +1,38 @@
+# Phần theo namespace của Keycloak Operator 26.7.5: operator chỉ quản lý CR trong namespace của nó, nên mỗi môi trường
+# chạy một bản (đơn giản RBAC, tốn thêm ~150 MB RAM). CRD + ClusterRole cài một lần ở ../operator-cluster.
+# Overlay môi trường phải đổi tên ClusterRoleBinding (tài nguyên cấp cluster) để prod và staging không trùng.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/26.7.5/kubernetes/kubernetes.yml
+patches:
+  - patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: keycloak-operator-clusterrole
+  - patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: keycloakcontroller-cluster-role
+  - patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: keycloakoidcclientcontroller-cluster-role
+  - patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: keycloakrealmimportcontroller-cluster-role
+  - patch: |-
+      $patch: delete
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: keycloaksamlclientcontroller-cluster-role

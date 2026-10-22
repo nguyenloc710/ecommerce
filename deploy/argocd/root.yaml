@@ -1,0 +1,21 @@
+# App-of-apps: áp dụng một lần bằng tay sau khi cài Argo CD (xem deploy/README.md), sau đó mọi thứ đồng bộ từ git.
+# Thứ tự triển khai bằng sync-wave trên từng Application con: operator (-3) → nền tảng (-2) → dữ liệu (0)
+# → Keycloak (1) → service + ingress (2). Cần health check cho kind Application trong argocd-cm (README).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce-root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

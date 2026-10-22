@@ -1,0 +1,10 @@
+# Nền tảng dùng chung: namespace, ClusterIssuer, NetworkPolicy default-deny cho namespace môi trường.
+# Các operator/chart (Sealed Secrets, cert-manager, CloudNativePG, plugin Barman Cloud) cài bằng Application Helm
+# trong deploy/argocd/apps/platform.yaml.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespaces.yaml
+  - cluster-issuer.yaml
+  - default-deny.yaml
+  - ../keycloak/operator-cluster

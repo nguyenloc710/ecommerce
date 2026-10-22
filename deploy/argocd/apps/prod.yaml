@@ -1,0 +1,129 @@
+# Môi trường prod: SealedSecret → dữ liệu → Keycloak → service + ingress (sync-wave).
+# Prod: tự đồng bộ nhưng không tự xóa tài nguyên (prune) để tránh mất dữ liệu do commit nhầm; xóa thì sync tay.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: secrets-prod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/secrets/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: data-prod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/data/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak-prod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/keycloak/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-prod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nguyenloc710/ecommerce.git
+    targetRevision: main
+    path: deploy/ingress/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+---
+# Mỗi service Spring Boot một Application: chart chung deploy/charts/spring-service + values môi trường
+# (CI cập nhật image.tag trong deploy/environments/prod/<service>.yaml).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: services-prod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          - service: gateway
+          - service: customer-service
+          - service: catalog-service
+          - service: order-service
+          - service: notification-service
+  template:
+    metadata:
+      name: "{{.service}}-prod"
+    spec:
+      project: default
+      sources:
+        - repoURL: https://github.com/nguyenloc710/ecommerce.git
+          targetRevision: main
+          path: deploy/charts/spring-service
+          helm:
+            releaseName: "{{.service}}"
+            valueFiles:
+              - $values/deploy/environments/prod/{{.service}}.yaml
+        - repoURL: https://github.com/nguyenloc710/ecommerce.git
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: prod
+      syncPolicy:
+        automated:
+          prune: false
+          selfHeal: true
