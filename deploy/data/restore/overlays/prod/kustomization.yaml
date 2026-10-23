@@ -1,0 +1,23 @@
+# kubectl apply -k deploy/data/restore/overlays/prod  (chỉ khi diễn tập/khôi phục, xem docs/runbook.md)
+# Cùng cỡ với "pg" ở prod để khôi phục thật có thể chuyển service sang ngay.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prod
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: Cluster
+      name: pg-restore
+    patch: |-
+      - op: replace
+        path: /spec/storage/size
+        value: 20Gi
+      - op: replace
+        path: /spec/resources
+        value:
+          requests:
+            cpu: 500m
+            memory: 1536Mi
+          limits:
+            memory: 1536Mi

@@ -1,0 +1,6 @@
+# kubectl apply -k deploy/data/restore/overlays/staging  (chỉ khi diễn tập/khôi phục, xem docs/runbook.md)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: staging
+resources:
+  - ../../base

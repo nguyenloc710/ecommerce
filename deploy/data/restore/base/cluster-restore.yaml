@@ -1,0 +1,37 @@
+# Khôi phục backup R2 vào một cluster MỚI tên "pg-restore" (không đụng "pg"): dùng để diễn tập định kỳ và làm bước đầu
+# khi khôi phục thật. Không nằm trong app-of-apps; chỉ apply tay theo docs/runbook.md. Không bật WAL archive ở cluster này
+# để không ghi đè kho backup của "pg".
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-restore
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.11-standard-trixie
+  storage:
+    storageClass: local-path
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 512Mi
+  postgresql:
+    parameters:
+      timezone: UTC
+      max_connections: "200"
+  bootstrap:
+    recovery:
+      source: origin
+      # PITR: bỏ comment và đặt thời điểm muốn quay về (trước sự cố); bỏ trống = tới WAL mới nhất
+      # recoveryTarget:
+      #   targetTime: "2026-10-23 08:00:00+07"
+  externalClusters:
+    - name: origin
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          # Đọc backup + WAL của cluster "pg" từ ObjectStore r2-backup (deploy/data/base/postgres-backup.yaml)
+          barmanObjectName: r2-backup
+          serverName: pg

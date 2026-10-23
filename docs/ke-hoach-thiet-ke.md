@@ -675,6 +675,8 @@ Vì module đã tách sẵn package, schema và chỉ giao tiếp qua API/event,
 
 ## 17. Checklist trước khi go-live
 
+Tình trạng từng mục (bằng chứng, việc còn lại, kết quả chạy staging) theo dõi ở `docs/go-live-checklist.md`; quy trình xử lý sự cố ở `docs/runbook.md`.
+
 - [ ] Mỗi service có probes, graceful shutdown, PDB (prod), NetworkPolicy
 - [ ] `spring-modulith` verify pass (không có module gọi chéo trái phép)
 - [ ] Keycloak: admin console không truy cập được từ Internet; brute force bật; OTP bắt buộc cho `STAFF`/`ADMIN`; SMTP gửi mail xác thực được

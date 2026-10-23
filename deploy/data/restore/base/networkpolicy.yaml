@@ -1,0 +1,31 @@
+# Namespace có default-deny-ingress: mở cho operator CNPG (namespace platform) quản lý pg-restore, và cho service/Keycloak
+# để có thể chuyển sang pg-restore-rw khi khôi phục thật (giống NetworkPolicy "pg" ở deploy/data/base).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pg-restore
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: pg-restore
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [customer-service, catalog-service, order-service, notification-service]
+        - podSelector:
+            matchLabels:
+              app: keycloak
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: pg-restore
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: platform
+      ports:
+        - port: 5432
+        - port: 8000
