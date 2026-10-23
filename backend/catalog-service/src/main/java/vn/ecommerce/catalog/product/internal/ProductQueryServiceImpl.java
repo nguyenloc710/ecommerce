@@ -30,10 +30,14 @@ import vn.ecommerce.catalog.product.ProductListQuery;
 import vn.ecommerce.catalog.product.ProductQueryService;
 import vn.ecommerce.catalog.product.internal.domain.Category;
 import vn.ecommerce.catalog.product.internal.domain.CategoryStatus;
+import vn.ecommerce.catalog.product.internal.domain.GoldKarat;
+import vn.ecommerce.catalog.product.internal.domain.GoldRate;
+import vn.ecommerce.catalog.product.internal.domain.PricingType;
 import vn.ecommerce.catalog.product.internal.domain.Product;
 import vn.ecommerce.catalog.product.internal.domain.ProductStatus;
 import vn.ecommerce.catalog.product.internal.domain.ProductVariant;
 import vn.ecommerce.catalog.product.internal.domain.VariantStatus;
+import vn.ecommerce.catalog.product.internal.gold.GoldPricing;
 import vn.ecommerce.catalog.product.internal.repo.BrandRepository;
 import vn.ecommerce.catalog.product.internal.repo.CategoryRepository;
 import vn.ecommerce.catalog.product.internal.repo.CategoryRow;
@@ -67,6 +71,7 @@ class ProductQueryServiceImpl implements ProductQueryService {
     private final ProductMapper mapper;
     private final ProductProperties properties;
     private final PriceAdjustments priceAdjustments;
+    private final GoldPricing goldPricing;
 
     @Override
     public List<CategoryTreeNode> categoryTree() {
@@ -114,7 +119,7 @@ class ProductQueryServiceImpl implements ProductQueryService {
                 product.getBrand() == null ? null : mapper.toBrandRef(product.getBrand()),
                 mapper.toCategoryRef(product.getCategory()),
                 breadcrumb(product.getCategory()),
-                adjustVariants(variants.stream().map(mapper::toVariantView).toList()),
+                adjustVariants(withGold(product, variants)),
                 images,
                 options(variants));
     }
@@ -209,6 +214,18 @@ class ProductQueryServiceImpl implements ProductQueryService {
             AdjustedPrice a = adjusted.get(v.id());
             return a == null ? v : new VariantRow(v.productId(), v.id(), a.price(), PriceAdjustments.compareAtWhenAdjusted(v.price(), v.compareAtPrice()),
                     v.optionValues());
+        }).toList();
+    }
+
+    /** Sản phẩm GOLD_RATE: kèm cách tính giá theo giá vàng hiện hành để PDP hiển thị minh bạch. */
+    private List<ProductDetailView.VariantView> withGold(Product product, List<ProductVariant> variants) {
+        Map<GoldKarat, GoldRate> rates = product.getPricingType() == PricingType.GOLD_RATE ? goldPricing.currentRates() : Map.of();
+        return variants.stream().map(v -> {
+            ProductDetailView.VariantView view = mapper.toVariantView(v);
+            GoldRate rate = v.hasGoldPricing() ? rates.get(v.getGoldKarat()) : null;
+            return rate == null ? view : new ProductDetailView.VariantView(view.id(), view.skuCode(), view.optionValues(), view.price(),
+                    view.compareAtPrice(), view.weightGram(), null, null, new ProductDetailView.GoldBreakdown(v.getGoldKarat().name(),
+                    v.getGoldWeight(), rate.getPricePerGram(), v.getMakingFee(), rate.getEffectiveAt()));
         }).toList();
     }
 

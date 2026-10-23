@@ -1,7 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
-import type { AdminOrderRow, AdminReviewRow, BrandOption, CategoryOption, InventoryRow, Paged, ProductAdmin, ProductAdminRow } from "@/lib/admin-shared";
+import type { AdminOrderRow, AdminReviewRow, BrandOption, CategoryOption, GoldRateView, InventoryRow, Paged, ProductAdmin, ProductAdminRow } from "@/lib/admin-shared";
 import type { OrderStatus, OrderView } from "@/lib/checkout-shared";
 import type { AdminFlashSaleDetail, AdminFlashSaleRow } from "@/lib/flash-sale-shared";
 import { authFetch } from "@/lib/session";
@@ -51,3 +51,8 @@ export const listInventory = (o: { q?: string; lowStock?: boolean; page: number 
 export const listFlashSales = (page: number) => get<Paged<AdminFlashSaleRow>>(`/api/admin/catalog/flash-sales${qs({ page, size: 20 })}`);
 
 export const getFlashSale = (id: string) => orNotFound(get<AdminFlashSaleDetail>(`/api/admin/catalog/flash-sales/${encodeURIComponent(id)}`));
+
+export const listGoldRates = (page: number) => get<Paged<GoldRateView>>(`/api/admin/catalog/gold-rates${qs({ page, size: 20 })}`);
+
+/** Giá hiện hành (API công khai, không cache để admin thấy ngay sau khi nhập). */
+export const currentGoldRates = () => get<GoldRateView[]>("/api/gold-rates/current");

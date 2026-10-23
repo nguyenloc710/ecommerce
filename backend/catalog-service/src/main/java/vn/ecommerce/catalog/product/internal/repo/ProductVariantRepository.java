@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import vn.ecommerce.catalog.product.internal.domain.GoldKarat;
 import vn.ecommerce.catalog.product.internal.domain.ProductVariant;
 import vn.ecommerce.catalog.product.internal.domain.VariantStatus;
 
@@ -30,6 +31,14 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     boolean existsBySkuCode(String skuCode);
 
     boolean existsBySkuCodeAndIdNot(String skuCode, UUID id);
+
+    /** Variant tính giá theo vàng loại {@code karat} (sản phẩm GOLD_RATE, đủ trường giá vàng) để tính lại khi có giá mới. */
+    @Query("""
+            select v from ProductVariant v join fetch v.product p
+            where v.goldKarat = :karat and v.goldWeight is not null and v.makingFee is not null
+              and p.pricingType = vn.ecommerce.catalog.product.internal.domain.PricingType.GOLD_RATE
+            """)
+    List<ProductVariant> findGoldPricedByKarat(@Param("karat") GoldKarat karat);
 
     // ---- tra cứu cho module khác ----
 

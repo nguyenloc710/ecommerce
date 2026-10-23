@@ -14,6 +14,7 @@ public interface ProductMapper {
 
     @Mapping(target = "priceLabel", ignore = true)
     @Mapping(target = "priceEndsAt", ignore = true)
+    @Mapping(target = "gold", ignore = true)
     ProductDetailView.VariantView toVariantView(ProductVariant variant);
 
     @Mapping(target = "variantId", source = "variant.id")

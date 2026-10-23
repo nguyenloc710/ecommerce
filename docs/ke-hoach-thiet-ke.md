@@ -243,10 +243,14 @@ Product  (id, slug, name, description, brand_id, category_id, attributes JSONB,
           pricing_type FIXED|GOLD_RATE, status, seo_*, search_vector, version)
 ProductVariant/SKU (id, product_id, sku_code, option_values JSONB, price,
           compare_at_price, weight, status, version)
+          + gold_karat, gold_weight, making_fee (chỉ sản phẩm GOLD_RATE, B-31)
+GoldRate (karat K24|K18|K14|K10, price_per_gram, effective_at, note)   — chỉ thêm; mới nhất mỗi loại = giá hiện hành
 ProductImage (product_id, variant_id nullable, url, sort_order, alt)
 Review   (id, product_id, sku_id, customer_id, order_id, author_name, rating, content, image_keys, status, reject_reason)
 ReviewEligibility (customer_id, product_id, sku_id, order_id, delivered_at)   — mở khi nhận order.delivered (B-29)
 ```
+
+**Giá theo vàng (E7.3, B-09/B-31):** giá variant GOLD_RATE = `gold_weight × price_per_gram + making_fee`, làm tròn tới 1.000đ. Nhập giá vàng mới (`POST /api/admin/catalog/gold-rates`) tính lại mọi variant dùng loại vàng đó trong cùng transaction và ghi vào `product_variant.price`, nên mọi nơi đọc giá (danh sách, lọc, checkout) không cần biết về giá vàng. `GET /api/gold-rates/current` công khai; PDP nhận `gold` (cách tính) trong mỗi variant.
 
 **Tồn kho:**
 ```

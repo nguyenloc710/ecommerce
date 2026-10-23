@@ -30,14 +30,24 @@ public record ProductDetailView(
     /**
      * @param priceLabel   mã nhãn khi giá đang được điều chỉnh (ví dụ {@code FLASH_SALE}), null nếu giá gốc
      * @param priceEndsAt  giá điều chỉnh hết hiệu lực lúc nào (FE đếm ngược)
+     * @param gold         cách tính giá theo vàng (sản phẩm GOLD_RATE, B-09); null với giá cố định
      */
     public record VariantView(UUID id, String skuCode, Map<String, String> optionValues, BigDecimal price,
-                              BigDecimal compareAtPrice, Integer weightGram, String priceLabel, Instant priceEndsAt) {
+                              BigDecimal compareAtPrice, Integer weightGram, String priceLabel, Instant priceEndsAt,
+                              GoldBreakdown gold) {
 
         /** Bản sao với giá điều chỉnh (giá gốc thành giá gạch). */
         public VariantView adjusted(BigDecimal newPrice, BigDecimal newCompareAt, String label, Instant endsAt) {
-            return new VariantView(id, skuCode, optionValues, newPrice, newCompareAt, weightGram, label, endsAt);
+            return new VariantView(id, skuCode, optionValues, newPrice, newCompareAt, weightGram, label, endsAt, gold);
         }
+    }
+
+    /**
+     * Giá = {@code weightGram × ratePerGram + makingFee}, làm tròn.
+     *
+     * @param rateEffectiveAt giá vàng được nhập lúc nào ("giá vàng cập nhật 09:00 23/10")
+     */
+    public record GoldBreakdown(String karat, BigDecimal weightGram, BigDecimal ratePerGram, BigDecimal makingFee, Instant rateEffectiveAt) {
     }
 
     public record ImageView(UUID id, UUID variantId, String url, String alt, int sortOrder) {

@@ -76,6 +76,13 @@ export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = { DRAFT: "Nh
 
 export type ProductAdminRow = { id: string; slug: string; name: string; categoryName: string; status: ProductStatus; publishedAt: string | null; updatedAt: string; version: number };
 
+/** Loại vàng có giá theo ngày (khớp GoldKarat của catalog). */
+export const GOLD_KARATS = ["K24", "K18", "K14", "K10"] as const;
+export type GoldKarat = (typeof GOLD_KARATS)[number];
+export const GOLD_KARAT_LABELS: Record<GoldKarat, string> = { K24: "Vàng 24K", K18: "Vàng 18K", K14: "Vàng 14K", K10: "Vàng 10K" };
+
+export type GoldRateView = { id: string; karat: GoldKarat; pricePerGram: number; effectiveAt: string; note: string | null; createdBy: string };
+
 export type VariantAdmin = {
   id: string;
   skuCode: string;
@@ -87,6 +94,9 @@ export type VariantAdmin = {
   status: "ACTIVE" | "HIDDEN";
   sortOrder: number;
   version: number;
+  goldKarat: GoldKarat | null;
+  goldWeight: number | null;
+  makingFee: number | null;
 };
 
 export type ImageAdmin = { id: string; variantId: string | null; url: string; alt: string | null; sortOrder: number };
@@ -136,6 +146,10 @@ export const variantSchema = z.object({
   price: z.string().trim().regex(/^\d+$/, "Giá là số nguyên không âm"),
   compareAtPrice: z.string().trim().regex(/^\d*$/, "Giá gốc là số nguyên không âm"),
   status: z.enum(["ACTIVE", "HIDDEN"]),
+  // Chỉ dùng khi sản phẩm GOLD_RATE (B-09): server tính giá từ giá vàng hiện hành
+  goldKarat: z.union([z.enum(GOLD_KARATS), z.literal("")]),
+  goldWeight: z.string().trim().regex(/^(\d+([.,]\d{1,3})?)?$/, "Trọng lượng dạng 2,345 (tối đa 3 số lẻ)"),
+  makingFee: z.string().trim().regex(/^\d*$/, "Phí gia công là số nguyên không âm"),
 });
 export type VariantFormValues = z.infer<typeof variantSchema>;
 

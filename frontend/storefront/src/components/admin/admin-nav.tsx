@@ -11,6 +11,7 @@ const items = [
   { href: "/admin/ton-kho", label: "Tồn kho" },
   { href: "/admin/danh-gia", label: "Đánh giá" },
   { href: "/admin/flash-sale", label: "Flash sale" },
+  { href: "/admin/gia-vang", label: "Giá vàng" },
 ];
 
 /** Menu trái trang quản trị; mục đang mở tô nền. Trên mobile thành hàng ngang cuộn được. */

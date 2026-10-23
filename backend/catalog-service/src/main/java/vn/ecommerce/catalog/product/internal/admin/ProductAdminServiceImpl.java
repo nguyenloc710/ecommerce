@@ -26,6 +26,7 @@ import vn.ecommerce.catalog.product.internal.admin.dto.ProductUpsertCommand;
 import vn.ecommerce.catalog.product.internal.admin.dto.VariantUpsertCommand;
 import vn.ecommerce.catalog.product.internal.domain.Brand;
 import vn.ecommerce.catalog.product.internal.domain.Category;
+import vn.ecommerce.catalog.product.internal.domain.GoldKarat;
 import vn.ecommerce.catalog.product.internal.domain.PricingType;
 import vn.ecommerce.catalog.product.internal.domain.Product;
 import vn.ecommerce.catalog.product.internal.domain.ProductImage;
@@ -36,6 +37,7 @@ import vn.ecommerce.catalog.product.internal.repo.BrandRepository;
 import vn.ecommerce.catalog.product.internal.repo.CategoryRepository;
 import vn.ecommerce.catalog.product.internal.repo.ProductImageRepository;
 import vn.ecommerce.catalog.product.internal.repo.ProductRepository;
+import vn.ecommerce.catalog.product.internal.gold.GoldPricing;
 import vn.ecommerce.catalog.product.internal.repo.ProductVariantRepository;
 import vn.ecommerce.common.security.CurrentUser;
 import vn.ecommerce.common.web.error.BadRequestException;
@@ -55,6 +57,7 @@ class ProductAdminServiceImpl implements ProductAdminService {
     private final BrandRepository brandRepository;
     private final AdminMapper mapper;
     private final CurrentUser currentUser;
+    private final GoldPricing goldPricing;
 
     @Override
     @Transactional(readOnly = true)
@@ -100,6 +103,11 @@ class ProductAdminServiceImpl implements ProductAdminService {
         product.setName(command.name());
         product.setSlug(slug);
         apply(product, command);
+        if (product.getPricingType() == PricingType.GOLD_RATE) {
+            // Chuyển sang giá theo vàng: variant đã đủ trường giá vàng được tính lại ngay, variant thiếu giữ giá cũ tới khi sửa
+            variantRepository.findByProductIdOrderBySortOrderAsc(productId).stream().filter(ProductVariant::hasGoldPricing)
+                    .forEach(goldPricing::applyCurrentRate);
+        }
         return view(productRepository.save(product));
     }
 
@@ -124,6 +132,7 @@ class ProductAdminServiceImpl implements ProductAdminService {
         }
         ProductVariant variant = new ProductVariant(product, sku, command.price());
         applyVariant(variant, command);
+        priceByGold(product, variant);
         variantRepository.save(variant);
         return view(product);
     }
@@ -141,6 +150,7 @@ class ProductAdminServiceImpl implements ProductAdminService {
         variant.setSkuCode(sku);
         variant.setPrice(command.price());
         applyVariant(variant, command);
+        priceByGold(product, variant);
         variantRepository.save(variant);
         return view(product);
     }
@@ -234,6 +244,16 @@ class ProductAdminServiceImpl implements ProductAdminService {
         variant.setBarcode(command.barcode());
         variant.setStatus(command.status() == null ? VariantStatus.ACTIVE : VariantStatus.valueOf(command.status()));
         variant.setSortOrder(command.sortOrder() == null ? 0 : command.sortOrder());
+        variant.setGoldKarat(command.goldKarat() == null ? null : GoldKarat.valueOf(command.goldKarat()));
+        variant.setGoldWeight(command.goldWeight());
+        variant.setMakingFee(command.makingFee());
+    }
+
+    /** Sản phẩm GOLD_RATE: giá variant luôn tính từ giá vàng hiện hành, bỏ qua giá client gửi (B-09). */
+    private void priceByGold(Product product, ProductVariant variant) {
+        if (product.getPricingType() == PricingType.GOLD_RATE) {
+            goldPricing.applyCurrentRate(variant);
+        }
     }
 
     private ProductAdminView view(Product product) {

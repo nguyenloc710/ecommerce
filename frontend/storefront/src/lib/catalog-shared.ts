@@ -40,6 +40,8 @@ export type ProductVariantView = {
   /** Mã nhãn giá đang áp (FLASH_SALE) và giờ hết hiệu lực; null khi bán giá thường. */
   priceLabel: string | null;
   priceEndsAt: string | null;
+  /** Cách tính giá theo vàng (sản phẩm GOLD_RATE): trọng lượng × giá vàng mỗi gam + phí gia công. */
+  gold: { karat: string; weightGram: number; ratePerGram: number; makingFee: number; rateEffectiveAt: string } | null;
 };
 
 export type ProductDetail = {

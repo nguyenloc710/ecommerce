@@ -16,6 +16,10 @@ type Props = {
 
 const ENGRAVING_MAX = 10; // B-08
 
+const formatWeight = (g: number) => new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 3 }).format(g);
+const formatRateTime = (iso: string) =>
+  new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(iso));
+
 /** Khung mua hàng dính bên phải (UI-09): chọn option, giá theo variant, tồn kho, khắc tên, thêm vào giỏ. */
 export function BuyBox({ product, availability, showEngraving }: Props) {
   const variants = product.variants;
@@ -82,6 +86,13 @@ export function BuyBox({ product, availability, showEngraving }: Props) {
         ) : null}
         {product.pricingType === "GOLD_RATE" ? <span className="text-[12px] text-muted">· theo giá vàng ngày</span> : null}
       </div>
+      {variant?.gold ? (
+        <p className="-mt-2 m-0 text-[12px] leading-[1.6] text-muted">
+          Vàng {variant.gold.karat.replace("K", "")}K {formatWeight(variant.gold.weightGram)} g × {formatVnd(variant.gold.ratePerGram)}/g + công {formatVnd(variant.gold.makingFee)}
+          <br />
+          Giá vàng cập nhật {formatRateTime(variant.gold.rateEffectiveAt)}, chốt giá khi đặt hàng
+        </p>
+      ) : null}
       {variant?.priceLabel === "FLASH_SALE" && variant.priceEndsAt ? (
         <div className="-mt-2 flex items-center gap-2 text-[12px] text-sale">
           <span className="eyebrow text-[10px]">Flash sale</span>

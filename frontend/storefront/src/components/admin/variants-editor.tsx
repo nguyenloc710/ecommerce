@@ -6,10 +6,10 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { ErrorNote } from "@/components/admin/admin-ui";
 import { deleteVariant, saveVariant, type AdminError } from "@/lib/admin-actions";
-import { formatOptions, variantSchema, type VariantAdmin, type VariantFormValues } from "@/lib/admin-shared";
+import { GOLD_KARAT_LABELS, GOLD_KARATS, formatOptions, variantSchema, type VariantAdmin, type VariantFormValues } from "@/lib/admin-shared";
 
 /** Bảng biến thể (SKU): mỗi dòng là một form nhỏ lưu riêng vì mỗi biến thể có version riêng. */
-export function VariantsEditor({ productId, variants }: { productId: string; variants: VariantAdmin[] }) {
+export function VariantsEditor({ productId, variants, goldPricing }: { productId: string; variants: VariantAdmin[]; goldPricing: boolean }) {
   const [adding, setAdding] = useState(variants.length === 0);
   return (
     <section className="card flex flex-col gap-3 p-4">
@@ -23,6 +23,7 @@ export function VariantsEditor({ productId, variants }: { productId: string; var
       </div>
       <p className="m-0 text-[12px] text-muted">
         Thuộc tính nhập dạng <code>color=Bạc, size=6</code>. Tồn kho chỉnh ở trang Tồn kho sau khi tạo biến thể.
+        {goldPricing ? " Sản phẩm tính giá theo vàng: nhập loại vàng, trọng lượng và phí gia công, giá bán tự tính theo giá vàng hiện hành." : null}
       </p>
       <div className="hidden grid-cols-[1.2fr_1.6fr_1fr_1fr_0.9fr_auto] gap-2 px-1 text-[12px] text-muted lg:grid">
         <span>SKU</span>
@@ -33,14 +34,14 @@ export function VariantsEditor({ productId, variants }: { productId: string; var
         <span />
       </div>
       {variants.map((v) => (
-        <VariantRow key={`${v.id}:${v.version}`} productId={productId} variant={v} />
+        <VariantRow key={`${v.id}:${v.version}`} productId={productId} variant={v} goldPricing={goldPricing} />
       ))}
-      {adding ? <VariantRow productId={productId} variant={null} onDone={() => setAdding(false)} /> : null}
+      {adding ? <VariantRow productId={productId} variant={null} goldPricing={goldPricing} onDone={() => setAdding(false)} /> : null}
     </section>
   );
 }
 
-function VariantRow({ productId, variant, onDone }: { productId: string; variant: VariantAdmin | null; onDone?: () => void }) {
+function VariantRow({ productId, variant, goldPricing, onDone }: { productId: string; variant: VariantAdmin | null; goldPricing: boolean; onDone?: () => void }) {
   const router = useRouter();
   const [error, setError] = useState<AdminError | null>(null);
   const [pending, start] = useTransition();
@@ -49,9 +50,12 @@ function VariantRow({ productId, variant, onDone }: { productId: string; variant
     defaultValues: {
       skuCode: variant?.skuCode ?? "",
       options: variant ? formatOptions(variant.optionValues) : "",
-      price: variant ? String(variant.price) : "",
+      price: variant ? String(variant.price) : goldPricing ? "0" : "",
       compareAtPrice: variant?.compareAtPrice != null ? String(variant.compareAtPrice) : "",
       status: variant?.status ?? "ACTIVE",
+      goldKarat: variant?.goldKarat ?? "",
+      goldWeight: variant?.goldWeight != null ? String(variant.goldWeight) : "",
+      makingFee: variant?.makingFee != null ? String(variant.makingFee) : "",
     },
   });
   const fieldError = Object.values(formState.errors)[0]?.message;
@@ -83,7 +87,15 @@ function VariantRow({ productId, variant, onDone }: { productId: string; variant
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-[1.2fr_1.6fr_1fr_1fr_0.9fr_auto]">
         <input {...register("skuCode")} placeholder="SKU" aria-label="SKU" className="input-admin" />
         <input {...register("options")} placeholder="color=Bạc, size=6" aria-label="Thuộc tính" className="input-admin" />
-        <input {...register("price")} inputMode="numeric" placeholder="Giá bán" aria-label="Giá bán" className="input-admin" />
+        <input
+          {...register("price")}
+          inputMode="numeric"
+          placeholder={goldPricing ? "Tự tính" : "Giá bán"}
+          aria-label="Giá bán"
+          readOnly={goldPricing}
+          title={goldPricing ? "Giá tính từ giá vàng hiện hành" : undefined}
+          className={`input-admin ${goldPricing ? "bg-admin-bg text-muted" : ""}`}
+        />
         <input {...register("compareAtPrice")} inputMode="numeric" placeholder="Giá gốc" aria-label="Giá gốc" className="input-admin" />
         <select {...register("status")} aria-label="Trạng thái" className="input-admin">
           <option value="ACTIVE">Đang bán</option>
@@ -104,6 +116,20 @@ function VariantRow({ productId, variant, onDone }: { productId: string; variant
           )}
         </div>
       </div>
+      {goldPricing ? (
+        <div className="grid grid-cols-3 gap-2 lg:w-2/3">
+          <select {...register("goldKarat")} aria-label="Loại vàng" className="input-admin">
+            <option value="">Loại vàng</option>
+            {GOLD_KARATS.map((k) => (
+              <option key={k} value={k}>
+                {GOLD_KARAT_LABELS[k]}
+              </option>
+            ))}
+          </select>
+          <input {...register("goldWeight")} inputMode="decimal" placeholder="Trọng lượng vàng (g)" aria-label="Trọng lượng vàng" className="input-admin" />
+          <input {...register("makingFee")} inputMode="numeric" placeholder="Phí gia công (đ)" aria-label="Phí gia công" className="input-admin" />
+        </div>
+      ) : null}
       {fieldError ? <span className="text-[12px] text-sale">{fieldError}</span> : null}
       {error ? <ErrorNote message={error.message} traceId={error.traceId} /> : null}
     </form>

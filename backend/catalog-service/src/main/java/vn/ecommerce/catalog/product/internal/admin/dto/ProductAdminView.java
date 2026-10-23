@@ -28,7 +28,7 @@ public record ProductAdminView(
 
     public record VariantAdminView(UUID id, String skuCode, Map<String, String> optionValues, BigDecimal price,
                                    BigDecimal compareAtPrice, Integer weightGram, String barcode, String status,
-                                   int sortOrder, long version) {
+                                   int sortOrder, long version, String goldKarat, BigDecimal goldWeight, BigDecimal makingFee) {
     }
 
     public record ImageAdminView(UUID id, UUID variantId, String url, String alt, int sortOrder) {

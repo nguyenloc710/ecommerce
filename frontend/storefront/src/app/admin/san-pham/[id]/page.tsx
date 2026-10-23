@@ -39,7 +39,7 @@ async function EditProduct({ params }: Pick<PageProps<"/admin/san-pham/[id]">, "
       <div className="flex flex-col gap-4">
         {/* Không key theo version: refresh sau khi lưu đưa version mới vào props, form giữ trạng thái "Đã lưu" */}
         <ProductForm product={product} categories={categories} brands={brands} />
-        <VariantsEditor productId={product.id} variants={product.variants} />
+        <VariantsEditor productId={product.id} variants={product.variants} goldPricing={product.pricingType === "GOLD_RATE"} />
         {/* key theo id ảnh: ảnh mới có id sau khi lưu, phải nạp lại để lần lưu sau không tạo trùng */}
         <ImagesEditor key={product.images.map((i) => i.id).join()} productId={product.id} images={product.images} variants={product.variants} />
         <p className="m-0 text-[12px] text-muted">Cập nhật lần cuối {formatDateTime(product.updatedAt)}</p>

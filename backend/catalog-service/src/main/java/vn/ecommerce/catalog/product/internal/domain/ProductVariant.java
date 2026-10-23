@@ -66,6 +66,21 @@ public class ProductVariant extends SoftDeletableEntity {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    /** Chỉ dùng khi sản phẩm GOLD_RATE (B-09): loại vàng, trọng lượng vàng (gam) và phí gia công. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gold_karat", length = 8)
+    private GoldKarat goldKarat;
+
+    @Column(name = "gold_weight", precision = 10, scale = 3)
+    private BigDecimal goldWeight;
+
+    @Column(name = "making_fee", precision = 19, scale = 2)
+    private BigDecimal makingFee;
+
+    public boolean hasGoldPricing() {
+        return goldKarat != null && goldWeight != null && makingFee != null;
+    }
+
     public ProductVariant(Product product, String skuCode, BigDecimal price) {
         this.product = product;
         this.skuCode = skuCode;

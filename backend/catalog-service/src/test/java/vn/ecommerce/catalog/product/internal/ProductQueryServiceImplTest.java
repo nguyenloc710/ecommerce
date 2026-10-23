@@ -35,6 +35,7 @@ import vn.ecommerce.catalog.product.ProductListQuery;
 import vn.ecommerce.catalog.product.ProductSort;
 import vn.ecommerce.catalog.product.internal.domain.CategoryStatus;
 import vn.ecommerce.catalog.product.internal.domain.ProductStatus;
+import vn.ecommerce.catalog.product.internal.gold.GoldPricing;
 import vn.ecommerce.catalog.product.internal.repo.BrandRepository;
 import vn.ecommerce.catalog.product.internal.repo.CategoryRepository;
 import vn.ecommerce.catalog.product.internal.repo.CategoryRow;
@@ -62,6 +63,7 @@ class ProductQueryServiceImplTest {
     @Mock ProductSearchRepository searchRepository;
     @Mock ProductVariantRepository variantRepository;
     @Mock ProductImageRepository imageRepository;
+    @Mock GoldPricing goldPricing;
 
     private ProductQueryServiceImpl service;
 
@@ -69,7 +71,7 @@ class ProductQueryServiceImplTest {
     void setUp() {
         service = new ProductQueryServiceImpl(categoryRepository, brandRepository, productRepository, searchRepository,
                 variantRepository, imageRepository, Mappers.getMapper(ProductMapper.class),
-                new ProductProperties(Duration.ofDays(30), "color"), new PriceAdjustments(List.of()));
+                new ProductProperties(Duration.ofDays(30), "color"), new PriceAdjustments(List.of()), goldPricing);
     }
 
     private void stubCategories() {

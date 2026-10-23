@@ -87,6 +87,9 @@ ecommerce:
     upload-expiry: 10m
     max-review-image-size: 5MB
     allowed-image-types: [image/jpeg, image/png, image/webp]
+  gold:
+    # Giá theo vàng làm tròn tới bội số này (đ), B-09
+    price-rounding: 1000
   flash-sale:
     # Khóa Redis giữ thêm sau giờ kết thúc để đơn đang thanh toán vẫn trả suất được
     key-grace: 1h
@@ -101,6 +104,7 @@ ecommerce:
       - /api/brands/**
       - /api/reviews/**
       - /api/flash-sales/**
+      - /api/gold-rates/**
       - /api/inventory/**
 
 management:

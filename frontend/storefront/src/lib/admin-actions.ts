@@ -120,6 +120,9 @@ export async function saveVariant(productId: string, variantId: string | null, v
     compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : undefined,
     status: v.status,
     version,
+    goldKarat: v.goldKarat || undefined,
+    goldWeight: v.goldWeight ? Number(v.goldWeight.replace(",", ".")) : undefined,
+    makingFee: v.makingFee ? Number(v.makingFee) : undefined,
   };
   try {
     const base = `/api/admin/catalog/products/${productId}/variants`;
@@ -223,6 +226,20 @@ export async function cancelFlashSale(id: string, version: number): Promise<Resu
     await send(`/api/admin/catalog/flash-sales/${encodeURIComponent(id)}/cancel`, "POST", { version });
     refreshStorefront();
     return { ok: true };
+  } catch (error) {
+    return toError(error);
+  }
+}
+
+// ---- Giá vàng (E7.3) ----
+
+/** Nhập giá vàng mới; backend tính lại giá mọi sản phẩm theo vàng nên làm mới cache catalog. */
+export async function setGoldRate(karat: string, pricePerGram: number, note?: string): Promise<Result<{ repricedVariants: number }>> {
+  if (!Number.isInteger(pricePerGram) || pricePerGram <= 0) return { ok: false, message: "Giá mỗi gam là số nguyên dương." };
+  try {
+    const res = await send<{ repricedVariants: number }>("/api/admin/catalog/gold-rates", "POST", { karat, pricePerGram, note: note?.trim() || undefined });
+    refreshStorefront();
+    return { ok: true, repricedVariants: res.repricedVariants };
   } catch (error) {
     return toError(error);
   }

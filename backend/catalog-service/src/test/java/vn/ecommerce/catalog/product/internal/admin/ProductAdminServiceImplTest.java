@@ -26,10 +26,17 @@ import vn.ecommerce.catalog.product.internal.admin.dto.ProductAdminView;
 import vn.ecommerce.catalog.product.internal.admin.dto.ProductUpsertCommand;
 import vn.ecommerce.catalog.product.internal.admin.dto.VariantUpsertCommand;
 import vn.ecommerce.catalog.product.internal.domain.Category;
+import vn.ecommerce.catalog.product.internal.domain.GoldKarat;
+import vn.ecommerce.catalog.product.internal.domain.GoldRate;
+import vn.ecommerce.catalog.product.internal.domain.PricingType;
 import vn.ecommerce.catalog.product.internal.domain.Product;
 import vn.ecommerce.catalog.product.internal.domain.ProductImage;
 import vn.ecommerce.catalog.product.internal.domain.ProductStatus;
 import vn.ecommerce.catalog.product.internal.domain.ProductVariant;
+import vn.ecommerce.catalog.product.internal.gold.GoldErrorKeys;
+import vn.ecommerce.catalog.product.internal.gold.GoldPricing;
+import vn.ecommerce.catalog.product.internal.gold.GoldProperties;
+import vn.ecommerce.catalog.product.internal.gold.GoldRateRepository;
 import vn.ecommerce.catalog.product.internal.repo.BrandRepository;
 import vn.ecommerce.catalog.product.internal.repo.CategoryRepository;
 import vn.ecommerce.catalog.product.internal.repo.ProductImageRepository;
@@ -48,6 +55,7 @@ class ProductAdminServiceImplTest {
     @Mock CategoryRepository categoryRepository;
     @Mock BrandRepository brandRepository;
     @Mock CurrentUser currentUser;
+    @Mock GoldRateRepository goldRateRepository;
 
     private ProductAdminServiceImpl service;
     private Category category;
@@ -55,7 +63,8 @@ class ProductAdminServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new ProductAdminServiceImpl(productRepository, variantRepository, imageRepository, categoryRepository,
-                brandRepository, Mappers.getMapper(AdminMapper.class), currentUser);
+                brandRepository, Mappers.getMapper(AdminMapper.class), currentUser,
+                new GoldPricing(goldRateRepository, new GoldProperties(BigDecimal.valueOf(1000))));
         category = new Category("Nhẫn", "nhan", null);
     }
 
@@ -122,10 +131,54 @@ class ProductAdminServiceImplTest {
         when(variantRepository.existsBySkuCode("RNG-1")).thenReturn(true);
 
         assertThatThrownBy(() -> service.addVariant(product.getId(),
-                new VariantUpsertCommand("RNG-1", Map.of("size", "6"), new BigDecimal("890000"), null, null, null, null, null, null)))
+                new VariantUpsertCommand("RNG-1", Map.of("size", "6"), new BigDecimal("890000"), null, null, null, null, null, null, null, null, null)))
                 .isInstanceOf(ConflictException.class)
                 .hasFieldOrPropertyWithValue("messageKey", AdminErrorKeys.VARIANT_SKU_TAKEN);
         verify(variantRepository, never()).save(any());
+    }
+
+    @Test
+    void addVariant_goldProduct_ignoresClientPrice_andUsesCurrentRate() {
+        Product product = new Product(category, "Nhẫn vàng 18K", "nhan-vang");
+        product.setPricingType(PricingType.GOLD_RATE);
+        when(productRepository.findWithRelationsById(product.getId())).thenReturn(Optional.of(product));
+        when(goldRateRepository.findFirstByKaratOrderByEffectiveAtDesc(GoldKarat.K18))
+                .thenReturn(Optional.of(new GoldRate(GoldKarat.K18, new BigDecimal("1250000"), Instant.now(), null)));
+        ArgumentCaptor<ProductVariant> saved = ArgumentCaptor.forClass(ProductVariant.class);
+
+        service.addVariant(product.getId(), goldVariant("K18", new BigDecimal("2.345"), new BigDecimal("500000")));
+
+        verify(variantRepository).save(saved.capture());
+        // 2,345 × 1.250.000 + 500.000 = 3.431.250 → làm tròn 3.431.000
+        assertThat(saved.getValue().getPrice()).isEqualByComparingTo("3431000");
+        assertThat(saved.getValue().getGoldKarat()).isEqualTo(GoldKarat.K18);
+    }
+
+    @Test
+    void addVariant_goldProduct_requiresGoldFields() {
+        Product product = new Product(category, "Nhẫn vàng 18K", "nhan-vang");
+        product.setPricingType(PricingType.GOLD_RATE);
+        when(productRepository.findWithRelationsById(product.getId())).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> service.addVariant(product.getId(), goldVariant("K18", null, new BigDecimal("500000"))))
+                .hasFieldOrPropertyWithValue("messageKey", GoldErrorKeys.FIELDS_REQUIRED);
+        verify(variantRepository, never()).save(any());
+    }
+
+    @Test
+    void addVariant_goldProduct_rejectsKaratWithoutRate() {
+        Product product = new Product(category, "Nhẫn vàng 24K", "nhan-vang-24");
+        product.setPricingType(PricingType.GOLD_RATE);
+        when(productRepository.findWithRelationsById(product.getId())).thenReturn(Optional.of(product));
+        when(goldRateRepository.findFirstByKaratOrderByEffectiveAtDesc(GoldKarat.K24)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.addVariant(product.getId(), goldVariant("K24", BigDecimal.ONE, BigDecimal.ZERO)))
+                .hasFieldOrPropertyWithValue("messageKey", GoldErrorKeys.RATE_MISSING);
+        verify(variantRepository, never()).save(any());
+    }
+
+    private static VariantUpsertCommand goldVariant(String karat, BigDecimal weight, BigDecimal fee) {
+        return new VariantUpsertCommand("GLD-1", Map.of("size", "8"), BigDecimal.ZERO, null, null, null, null, null, null, karat, weight, fee);
     }
 
     @Test
