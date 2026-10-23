@@ -16,6 +16,8 @@
   /* Admin (UI-12) */
   --admin-bg: #f6f6f7;
   --admin-line: #e3e3e3;
+  /* Biểu đồ 1 chuỗi (báo cáo doanh thu): vàng đậm hơn --gold để đủ độ bão hòa, đã chạy validate_palette */
+  --chart-1: #9a6b1f;
 }
 
 @theme inline {

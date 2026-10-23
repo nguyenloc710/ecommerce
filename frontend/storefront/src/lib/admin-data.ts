@@ -1,7 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
-import type { AdminOrderRow, AdminReviewRow, BrandOption, CategoryOption, GoldRateView, InventoryRow, Paged, ProductAdmin, ProductAdminRow } from "@/lib/admin-shared";
+import type { AdminOrderRow, AdminReviewRow, BrandOption, CategoryOption, GoldRateView, InventoryRow, Paged, ProductAdmin, ProductAdminRow, RevenueReport } from "@/lib/admin-shared";
 import type { OrderStatus, OrderView } from "@/lib/checkout-shared";
 import type { AdminFlashSaleDetail, AdminFlashSaleRow } from "@/lib/flash-sale-shared";
 import { authFetch } from "@/lib/session";
@@ -56,3 +56,6 @@ export const listGoldRates = (page: number) => get<Paged<GoldRateView>>(`/api/ad
 
 /** Giá hiện hành (API công khai, không cache để admin thấy ngay sau khi nhập). */
 export const currentGoldRates = () => get<GoldRateView[]>("/api/gold-rates/current");
+
+export const getRevenueReport = (o: { from: string; to: string; groupBy: "DAY" | "MONTH" }) =>
+  get<RevenueReport>(`/api/admin/reports/revenue${qs({ from: o.from, to: o.to, groupBy: o.groupBy })}`);

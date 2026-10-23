@@ -209,3 +209,34 @@ export type AdminReviewRow = {
   createdAt: string;
   moderatedAt: string | null;
 };
+
+// ---- Báo cáo doanh thu (E7.4, chỉ ADMIN theo B-11) ----
+
+export type RevenueReport = {
+  from: string;
+  to: string;
+  groupBy: "DAY" | "MONTH";
+  summary: {
+    orderCount: number;
+    grossSales: number;
+    discount: number;
+    shippingFee: number;
+    netRevenue: number;
+    averageOrderValue: number;
+    awaitingPaymentCount: number;
+    cancelledCount: number;
+    returnedCount: number;
+    returnedAmount: number;
+  };
+  series: { period: string; orderCount: number; netRevenue: number }[];
+  topProducts: { productId: string; productName: string; productSlug: string; quantity: number; revenue: number }[];
+  byPaymentMethod: { method: string; orderCount: number; netRevenue: number }[];
+};
+
+/** Nhãn kỳ báo cáo: "02/10" theo ngày, "10/2026" theo tháng (period dạng yyyy-MM-dd). */
+export function periodLabel(period: string, monthly: boolean) {
+  const [y, m, d] = period.split("-");
+  return monthly ? `${m}/${y}` : `${d}/${m}`;
+}
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = { COD: "Thanh toán khi nhận hàng", MOCK_ONLINE: "Online (thử nghiệm)", VNPAY: "VNPay", MOMO: "MoMo" };

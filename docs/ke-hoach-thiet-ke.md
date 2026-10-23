@@ -315,6 +315,7 @@ shipment (id, order_id, carrier, tracking_code, fee, status)
 - Email và tên người nhận được snapshot vào đơn, nên notification-service không phải gọi Keycloak.
 - MVP (E3): thanh toán online dùng cổng giả `MOCK_ONLINE` (B-18) và hãng vận chuyển giả `MockCarrier` (B-19) cùng webhook ký HMAC; VNPay/MoMo, GHN/GHTK thật thay bằng bean mới ở giai đoạn Go-live (VNPay đã có `VnpayGateway` + IPN `GET /webhooks/payments/vnpay`, MoMo có `MomoGateway` + IPN `POST /webhooks/payments/momo`; bật bằng cấu hình, xem B-24, B-25). Quote trả thêm `paymentMethods` đang bật. Có thêm `POST /api/checkout/quote` để FE hiển thị bảng tính (giá hiện tại, giảm giá, lựa chọn giao hàng) trước khi đặt.
 - Địa chỉ giao hàng lấy từ sổ địa chỉ qua `GET /internal/customers/{id}/addresses/{addressId}` của customer-service (B-15) hoặc khách nhập tay; đơn lưu snapshot JSONB.
+- Báo cáo doanh thu (E7.4, B-32): `GET /api/admin/reports/revenue?from&to&groupBy=DAY|MONTH`, chỉ ADMIN, nằm trong module `orders` (`internal/report`, repository native SQL chỉ đọc). Doanh thu = đơn đã xác nhận/đã thanh toán, chưa trả hàng; gom theo ngày giờ Việt Nam.
 
 Trạng thái đơn: `PENDING → AWAITING_PAYMENT → CONFIRMED → PACKING → SHIPPING → DELIVERED → COMPLETED`, nhánh lỗi: `CANCELLED`, `RETURN_REQUESTED → RETURNED → REFUNDED`.
 

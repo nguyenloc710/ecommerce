@@ -65,7 +65,7 @@ spring:
             - id: order
               uri: ${ORDER_SERVICE_URL:http://localhost:8093}
               predicates:
-                - Path=/api/cart/**,/api/checkout/**,/api/orders/**,/api/payments/**,/api/vouchers/**,/api/admin/orders/**,/api/admin/vouchers/**
+                - Path=/api/cart/**,/api/checkout/**,/api/orders/**,/api/payments/**,/api/vouchers/**,/api/admin/orders/**,/api/admin/vouchers/**,/api/admin/reports/**
             - id: webhooks
               uri: ${ORDER_SERVICE_URL:http://localhost:8093}
               predicates:

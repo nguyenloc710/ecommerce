@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,8 @@ import vn.ecommerce.order.cart.internal.CartService;
 import vn.ecommerce.order.checkout.internal.CheckoutService;
 import vn.ecommerce.order.orders.internal.OrderAdminService;
 import vn.ecommerce.order.orders.internal.OrderService;
+import vn.ecommerce.order.orders.internal.report.RevenueReport;
+import vn.ecommerce.order.orders.internal.report.RevenueReportService;
 import vn.ecommerce.order.payment.PaymentMethod;
 import vn.ecommerce.order.payment.internal.PaymentService;
 import vn.ecommerce.order.promotion.VoucherView;
@@ -61,6 +64,7 @@ class OrderApiContractTest {
     @MockitoBean OrderService orderService;
     @MockitoBean OrderAdminService orderAdminService;
     @MockitoBean PaymentService paymentService;
+    @MockitoBean RevenueReportService revenueReportService;
 
     private static JwtRequestPostProcessor as(String... roles) {
         return jwt().jwt(j -> j.subject(SUB).claim("email", "lan@example.com").claim("roles", List.of(roles)))
@@ -112,6 +116,20 @@ class OrderApiContractTest {
         mockMvc.perform(post("/api/admin/vouchers").with(as("ADMIN")).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value("SALE10"));
+    }
+
+    @Test
+    void revenueReport_staff403_admin200() throws Exception {
+        LocalDate day = LocalDate.parse("2026-10-01");
+        when(revenueReportService.revenue(day, day, "DAY")).thenReturn(new RevenueReport(day, day, "DAY",
+                new RevenueReport.Summary(0, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0, 0, 0, BigDecimal.ZERO),
+                List.of(new RevenueReport.Point(day, 0, BigDecimal.ZERO)), List.of(), List.of()));
+
+        mockMvc.perform(get("/api/admin/reports/revenue").param("from", "2026-10-01").param("to", "2026-10-01").with(as("STAFF")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/reports/revenue").param("from", "2026-10-01").param("to", "2026-10-01").with(as("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.series[0].period").value("2026-10-01"));
     }
 
     @Test

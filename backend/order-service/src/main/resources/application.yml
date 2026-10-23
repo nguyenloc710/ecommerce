@@ -119,6 +119,10 @@ ecommerce:
     # B-20: đơn online chưa thanh toán quá hạn này sẽ bị hủy (= TTL giữ hàng B-03)
     payment-timeout: 15m
     expiry-check-interval: 60s
+  reports:
+    # B-11: báo cáo doanh thu chỉ ADMIN; mỗi lần xem tối đa 1 năm
+    max-range-days: 366
+    top-products: 10
 
 management:
   endpoints:

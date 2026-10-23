@@ -50,6 +50,10 @@ export async function requireStaff(callbackUrl: string): Promise<Session> {
   return session;
 }
 
+export function isAdmin(session: Pick<Session, "roles"> | null): boolean {
+  return !!session?.roles.includes("ADMIN");
+}
+
 export function isStaff(session: Pick<Session, "roles"> | null): boolean {
   return !!session?.roles.some((r) => (STAFF_ROLES as readonly string[]).includes(r));
 }
