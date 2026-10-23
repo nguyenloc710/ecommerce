@@ -46,7 +46,7 @@ class OrderStateMachine {
             case SHIPPING -> events.publishEvent(new OrderShippedEvent(UUID.randomUUID(), Instant.now(), order.getId(),
                     order.getCode(), order.getCustomerId().toString(), order.getContactEmail(), carrier, trackingCode));
             case DELIVERED -> events.publishEvent(new OrderDeliveredEvent(UUID.randomUUID(), Instant.now(), order.getId(),
-                    order.getCode(), order.getCustomerId().toString(), order.getContactEmail()));
+                    order.getCode(), order.getCustomerId().toString(), order.getContactEmail(), deliveredLines(order)));
             default -> {
                 // trạng thái khác không có event tích hợp
             }
@@ -59,6 +59,10 @@ class OrderStateMachine {
 
     private static boolean isOnline(Order order) {
         return !"COD".equals(order.getPaymentMethod());
+    }
+
+    private static List<OrderDeliveredEvent.Line> deliveredLines(Order order) {
+        return order.getItems().stream().map(i -> new OrderDeliveredEvent.Line(i.getSkuId(), i.getProductName())).distinct().toList();
     }
 
     private static List<OrderConfirmedEvent.Line> confirmedLines(Order order) {

@@ -50,8 +50,10 @@ jobs:
   #       include:
   #         - env: staging
   #           site: https://shop-staging.example.vn
+  #           media: https://media-staging.example.vn
   #         - env: prod
   #           site: https://shop.example.vn
+  #           media: https://media.example.vn
   #   steps:
   #     - uses: actions/checkout@v4
   #     - uses: docker/login-action@v3
@@ -60,5 +62,7 @@ jobs:
   #       with:
   #         context: frontend/storefront
   #         push: true
-  #         build-args: NEXT_PUBLIC_SITE_URL=${{ matrix.site }}
+  #         build-args: |
+  #           NEXT_PUBLIC_SITE_URL=${{ matrix.site }}
+  #           NEXT_PUBLIC_MEDIA_BASE_URL=${{ matrix.media }}
   #         tags: ghcr.io/${{ github.repository_owner }}/ecommerce/storefront:${{ github.sha }}-${{ matrix.env }}

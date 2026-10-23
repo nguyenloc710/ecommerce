@@ -1,7 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
-import type { AdminOrderRow, BrandOption, CategoryOption, InventoryRow, Paged, ProductAdmin, ProductAdminRow } from "@/lib/admin-shared";
+import type { AdminOrderRow, AdminReviewRow, BrandOption, CategoryOption, InventoryRow, Paged, ProductAdmin, ProductAdminRow } from "@/lib/admin-shared";
 import type { OrderStatus, OrderView } from "@/lib/checkout-shared";
 import { authFetch } from "@/lib/session";
 
@@ -40,6 +40,9 @@ export async function listBrands(): Promise<BrandOption[]> {
   const page = await get<Paged<BrandOption>>("/api/admin/catalog/brands?size=100");
   return page.items.map(({ id, name }) => ({ id, name }));
 }
+
+export const listReviews = (o: { status: string; page: number }) =>
+  get<Paged<AdminReviewRow>>(`/api/admin/catalog/reviews${qs({ status: o.status, page: o.page, size: 20 })}`);
 
 export const listInventory = (o: { q?: string; lowStock?: boolean; page: number }) =>
   get<Paged<InventoryRow>>(`/api/admin/inventory${qs({ q: o.q, lowStock: o.lowStock, page: o.page, size: 50 })}`);

@@ -15,6 +15,25 @@
     <description>Danh mục, sản phẩm, SKU, tồn kho, tìm kiếm, review, media</description>
 
     <dependencies>
+        <!-- Module media (E7.1): URL ký sẵn để trình duyệt upload thẳng ảnh lên R2/S3 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>apache-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+        </dependency>
         <dependency>
             <groupId>vn.ecommerce</groupId>
             <artifactId>common-web</artifactId>

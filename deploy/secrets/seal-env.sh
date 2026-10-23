@@ -6,7 +6,7 @@
 #
 # Mật khẩu nội bộ (DB, RabbitMQ, client secret Keycloak, admin Keycloak, secret webhook giả) sinh ngẫu nhiên mỗi lần
 # chạy, nên chỉ chạy lại khi muốn xoay vòng tất cả. Credential bên ngoài đọc từ biến môi trường của người chạy:
-#   R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, SMTP_HOST, SMTP_PORT, SMTP_FROM, SMTP_USERNAME, SMTP_PASSWORD,
+#   R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY (backup DB), R2_MEDIA_ACCESS_KEY_ID, R2_MEDIA_SECRET_ACCESS_KEY (ảnh), SMTP_HOST, SMTP_PORT, SMTP_FROM, SMTP_USERNAME, SMTP_PASSWORD,
 #   VNPAY_HASH_SECRET, MOMO_ACCESS_KEY, MOMO_SECRET_KEY, STOREFRONT_URL   (để trống = giá trị rỗng / tắt tích hợp)
 # Không bao giờ commit Secret chưa niêm phong; script chỉ ghi SealedSecret.
 set -euo pipefail
@@ -60,7 +60,8 @@ seal keycloak-realm-secrets Opaque \
 seal customer-service-secrets Opaque "DB_USERNAME=customer" "DB_PASSWORD=${DB_PASS[customer]}" \
   RABBITMQ_USERNAME=ecommerce "RABBITMQ_PASSWORD=$RABBIT_PASS" "KEYCLOAK_CLIENT_SECRET=$CUSTOMER_CLIENT_SECRET"
 seal catalog-service-secrets Opaque "DB_USERNAME=catalog" "DB_PASSWORD=${DB_PASS[catalog]}" \
-  RABBITMQ_USERNAME=ecommerce "RABBITMQ_PASSWORD=$RABBIT_PASS"
+  RABBITMQ_USERNAME=ecommerce "RABBITMQ_PASSWORD=$RABBIT_PASS" \
+  "MEDIA_ACCESS_KEY=${R2_MEDIA_ACCESS_KEY_ID:-}" "MEDIA_SECRET_KEY=${R2_MEDIA_SECRET_ACCESS_KEY:-}"
 PAYMENT_MOCK_SECRET="$(rand)"
 seal order-service-secrets Opaque "DB_USERNAME=orders" "DB_PASSWORD=${DB_PASS[order]}" \
   RABBITMQ_USERNAME=ecommerce "RABBITMQ_PASSWORD=$RABBIT_PASS" "KEYCLOAK_CLIENT_SECRET=$ORDER_CLIENT_SECRET" \

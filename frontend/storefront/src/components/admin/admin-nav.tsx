@@ -9,6 +9,7 @@ const items = [
   { href: "/admin/don-hang", label: "Đơn hàng" },
   { href: "/admin/san-pham", label: "Sản phẩm" },
   { href: "/admin/ton-kho", label: "Tồn kho" },
+  { href: "/admin/danh-gia", label: "Đánh giá" },
 ];
 
 /** Menu trái trang quản trị; mục đang mở tô nền. Trên mobile thành hàng ngang cuộn được. */

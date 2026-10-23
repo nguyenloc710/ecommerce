@@ -67,6 +67,23 @@ ecommerce:
     default-low-stock: 3
     expiry-batch-size: 200
     expiry-check-interval: 60s
+  # E7.1: kho ảnh S3-compatible. Local = SeaweedFS (local/docker-compose.yml), prod = Cloudflare R2 (region auto,
+  # bucket + CORS cho storefront + domain công khai tạo bằng tay; MEDIA_CREATE_BUCKET=false)
+  media:
+    endpoint: ${MEDIA_ENDPOINT:http://localhost:8333}
+    region: ${MEDIA_REGION:auto}
+    bucket: ${MEDIA_BUCKET:ecommerce-media}
+    access-key: ${MEDIA_ACCESS_KEY:media-dev-key}
+    secret-key: ${MEDIA_SECRET_KEY:media-dev-secret}
+    public-base-url: ${MEDIA_PUBLIC_BASE_URL:http://localhost:8333/ecommerce-media}
+    path-style: ${MEDIA_PATH_STYLE:true}
+    create-bucket-on-startup: ${MEDIA_CREATE_BUCKET:true}
+    upload-expiry: 10m
+    max-review-image-size: 5MB
+    allowed-image-types: [image/jpeg, image/png, image/webp]
+  review:
+    max-images: 5
+    default-page-size: 10
   security:
     public-get-paths:
       - /api/products/**

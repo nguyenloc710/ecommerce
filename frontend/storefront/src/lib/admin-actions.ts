@@ -170,3 +170,17 @@ export async function updateStock(skuId: string, onHand: number, lowStockThresho
     return toError(error);
   }
 }
+
+// ---- Đánh giá ----
+
+/** Duyệt / từ chối đánh giá; trang sản phẩm đọc đánh giá qua cache catalog nên làm mới ngay. */
+export async function moderateReview(reviewId: string, action: "approve" | "reject", reason?: string): Promise<Result> {
+  if (action === "reject" && !reason?.trim()) return { ok: false, message: "Vui lòng nhập lý do." };
+  try {
+    await send(`/api/admin/catalog/reviews/${encodeURIComponent(reviewId)}/${action}`, "POST", action === "reject" ? { reason: reason!.trim().slice(0, 255) } : undefined);
+    refreshStorefront();
+    return { ok: true };
+  } catch (error) {
+    return toError(error);
+  }
+}

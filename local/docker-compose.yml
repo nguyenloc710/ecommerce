@@ -61,6 +61,17 @@ services:
       postgres:
         condition: service_healthy
 
+  # Kho ảnh S3-compatible (E7.1) thay cho R2 khi dev: catalog ký URL upload, trình duyệt PUT thẳng vào đây.
+  # Khóa dev trong seaweedfs/s3.json; bucket ecommerce-media do catalog-service tạo lúc khởi động; đọc ẩn danh.
+  seaweedfs:
+    image: ghcr.io/chrislusf/seaweedfs:4.45
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json", "-s3.allowedOrigins=http://localhost:3000", "-master.volumeSizeLimitMB=256", "-volume.max=0"]
+    ports:
+      - "8333:8333"
+    volumes:
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+      - seaweedfs-data:/data
+
   # Hộp thư giả: Keycloak gửi mail xác thực/quên mật khẩu vào đây. UI: http://localhost:8026
   mailpit:
     image: ghcr.io/axllent/mailpit:v1.31.6
@@ -71,5 +82,6 @@ services:
   # Object storage S3 cho module media: thêm khi làm tới module này (MinIO hoặc Cloudflare R2 bucket dev).
 
 volumes:
+  seaweedfs-data:
   postgres-data:
   rabbitmq-data:

@@ -75,7 +75,7 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 
 ## E7. Tăng trưởng
 
-- [ ] E7.1 Review có ảnh + duyệt
+- [x] E7.1 Review có ảnh + duyệt (B-29): module `review` (quyền đánh giá từ order.delivered, gửi đánh giá, duyệt/ẩn có audit) + `media` (URL ký sẵn, trình duyệt PUT thẳng lên R2/SeaweedFS); trang sản phẩm có tóm tắt sao, danh sách, form gửi kèm ảnh, JSON-LD aggregateRating; admin `/admin/danh-gia`. Đã chạy đầu cuối local (SeaweedFS + RabbitMQ + Keycloak)
 - [ ] E7.2 Flash sale giữ hàng Redis
 - [ ] E7.3 Giá vàng theo ngày (B-09)
 - [ ] E7.4 Báo cáo doanh thu

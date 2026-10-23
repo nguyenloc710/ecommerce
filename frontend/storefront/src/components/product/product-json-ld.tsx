@@ -2,10 +2,10 @@ import type { ProductDetail } from "@/lib/catalog-shared";
 import { SHOP_NAME, absoluteUrl } from "@/lib/site";
 
 /**
- * Dữ liệu có cấu trúc schema.org cho trang sản phẩm: Product + AggregateOffer (khoảng giá các biến thể) và
+ * Dữ liệu có cấu trúc schema.org cho trang sản phẩm: Product + AggregateOffer (khoảng giá các biến thể), AggregateRating và
  * BreadcrumbList. Không ghi tình trạng còn hàng vì tồn kho đọc lúc request, còn khối này nằm trong phần prerender.
  */
-export function ProductJsonLd({ product }: { product: ProductDetail }) {
+export function ProductJsonLd({ product, rating }: { product: ProductDetail; rating?: { average: number; count: number } }) {
   const prices = product.variants.map((v) => v.price);
   const url = absoluteUrl(`/san-pham/${product.slug}`);
   const data = [
@@ -19,6 +19,8 @@ export function ProductJsonLd({ product }: { product: ProductDetail }) {
       brand: { "@type": "Brand", name: product.brand?.name ?? SHOP_NAME },
       category: product.category.name,
       url,
+      // Chỉ khi đã có đánh giá được duyệt (Google yêu cầu aggregateRating có số liệu thật)
+      aggregateRating: rating ? { "@type": "AggregateRating", ratingValue: rating.average, reviewCount: rating.count, bestRating: 5 } : undefined,
       offers:
         prices.length > 0
           ? {

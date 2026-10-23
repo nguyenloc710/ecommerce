@@ -28,6 +28,13 @@ env:
   OTLP_TRACING_ENDPOINT: http://alloy.platform:4318/v1/traces
   DB_URL: jdbc:postgresql://pg-rw:5432/catalog_db
   RABBITMQ_HOST: rabbitmq
+  # Kho ảnh đánh giá (E7.1, B-29): Cloudflare R2. Khóa R2 (MEDIA_ACCESS_KEY/MEDIA_SECRET_KEY) nằm trong catalog-service-secrets.
+  # Bucket, CORS (cho phép PUT từ storefront) và domain công khai tạo bằng tay trên Cloudflare. TODO(go-live): thay ACCOUNT_ID, domain.
+  MEDIA_ENDPOINT: https://ACCOUNT_ID.r2.cloudflarestorage.com
+  MEDIA_BUCKET: ecommerce-media-prod
+  MEDIA_PUBLIC_BASE_URL: https://media.example.vn
+  MEDIA_PATH_STYLE: "false"
+  MEDIA_CREATE_BUCKET: "false"
 
 # SealedSecret cung cấp DB_USERNAME/DB_PASSWORD, RABBITMQ_*, KEYCLOAK_CLIENT_SECRET...
 envFromSecrets:

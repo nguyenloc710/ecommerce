@@ -244,7 +244,8 @@ Product  (id, slug, name, description, brand_id, category_id, attributes JSONB,
 ProductVariant/SKU (id, product_id, sku_code, option_values JSONB, price,
           compare_at_price, weight, status, version)
 ProductImage (product_id, variant_id nullable, url, sort_order, alt)
-Review   (id, product_id, customer_id, order_id, rating, content, images, status)
+Review   (id, product_id, sku_id, customer_id, order_id, author_name, rating, content, image_keys, status, reject_reason)
+ReviewEligibility (customer_id, product_id, sku_id, order_id, delivered_at)   — mở khi nhận order.delivered (B-29)
 ```
 
 **Tồn kho:**
@@ -323,7 +324,7 @@ Trạng thái đơn: `PENDING → AWAITING_PAYMENT → CONFIRMED → PACKING →
 |---|---|---|
 | `customer.created` | customer | notification (email chào mừng, tùy chọn) |
 | `order.confirmed`, `order.cancelled` | order | catalog, notification |
-| `order.shipped`, `order.delivered` | order | notification, catalog (cho phép review) |
+| `order.shipped`, `order.delivered` | order | notification, catalog (cho phép review; `order.delivered` mang `lines` từ E7.1) |
 | `product.price-changed` (tùy chọn) | catalog | order (làm mới giỏ hàng) |
 
 - Bên phát: event được lưu vào bảng `event_publication` (Spring Modulith) trong cùng transaction với dữ liệu, sau đó mới gửi đi. Đây chính là outbox, không cần tự viết.

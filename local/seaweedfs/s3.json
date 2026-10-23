@@ -1,0 +1,13 @@
+{
+  "identities": [
+    {
+      "name": "catalog-service",
+      "credentials": [{ "accessKey": "media-dev-key", "secretKey": "media-dev-secret" }],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    },
+    {
+      "name": "anonymous",
+      "actions": ["Read:ecommerce-media"]
+    }
+  ]
+}

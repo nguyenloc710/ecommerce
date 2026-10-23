@@ -169,3 +169,29 @@ export type InventoryRow = {
   lowStock: boolean;
   version: number;
 };
+
+// ---- Đánh giá (E7.1) ----
+
+export type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export const REVIEW_TABS: { status: ReviewStatus; label: string }[] = [
+  { status: "PENDING", label: "Chờ duyệt" },
+  { status: "APPROVED", label: "Đã duyệt" },
+  { status: "REJECTED", label: "Đã từ chối" },
+];
+
+export type AdminReviewRow = {
+  id: string;
+  productId: string;
+  productName: string | null;
+  productSlug: string | null;
+  variantLabel: string | null;
+  authorName: string;
+  rating: number;
+  content: string | null;
+  imageUrls: string[];
+  status: ReviewStatus;
+  rejectReason: string | null;
+  createdAt: string;
+  moderatedAt: string | null;
+};

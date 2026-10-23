@@ -49,6 +49,7 @@ npm run dev
 | Keycloak realm `ecommerce` | http://localhost:8180/realms/ecommerce/account | `customer@example.com` / `Customer123`, `admin@example.com` / `Admin12345` |
 | RabbitMQ | http://localhost:15672 | `ecommerce` / `ecommerce` |
 | Mailpit (email Keycloak gửi) | http://localhost:8026 | |
+| SeaweedFS (kho ảnh S3, thay R2 khi dev) | http://localhost:8333 | khóa dev `media-dev-key` / `media-dev-secret` (`local/seaweedfs/s3.json`) |
 | Swagger UI từng service | http://localhost:809x/swagger-ui.html | |
 
 Mật khẩu và client secret trong `local/` chỉ dùng cho dev, không dùng ở staging/prod.

@@ -14,10 +14,13 @@ FROM ${NODE_IMAGE} AS build
 WORKDIR /app
 ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ARG NEXT_PUBLIC_SHOP_NAME="Tên shop"
+# Domain kho ảnh đánh giá (R2) để next/image cho phép tối ưu ảnh
+ARG NEXT_PUBLIC_MEDIA_BASE_URL=http://localhost:8333/ecommerce-media
 # Lúc build có thể không gọi được API: trang dùng dữ liệu dự phòng rồi tự làm mới theo cacheLife khi chạy
 ARG API_BASE_URL=http://localhost:8080
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL} \
     NEXT_PUBLIC_SHOP_NAME=${NEXT_PUBLIC_SHOP_NAME} \
+    NEXT_PUBLIC_MEDIA_BASE_URL=${NEXT_PUBLIC_MEDIA_BASE_URL} \
     API_BASE_URL=${API_BASE_URL} \
     NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules

@@ -7,6 +7,9 @@ import { Gallery } from "@/components/product/gallery";
 import { ProductCard } from "@/components/product/product-card";
 import { PLACEHOLDER_SLUG, getProduct, getRelatedProducts, iconFor, listAllProductSlugs, type ProductDetail } from "@/lib/catalog";
 import { ProductJsonLd } from "@/components/product/product-json-ld";
+import { ProductReviews } from "@/components/review/product-reviews";
+import { Stars } from "@/components/review/stars";
+import { getProductReviews } from "@/lib/reviews";
 
 type Props = PageProps<"/san-pham/[slug]">;
 
@@ -43,11 +46,11 @@ export default async function ProductPage({ params }: Props) {
 async function ProductDetailPage({ product }: { product: ProductDetail }) {
   const isJewelry = product.breadcrumb.some((b) => b.slug === "trang-suc");
   const attributes = Object.entries(product.attributes).filter(([, v]) => typeof v === "string" || typeof v === "number");
-  const related = await getRelatedProducts(product.category.slug, product.slug, 4);
+  const [related, reviews] = await Promise.all([getRelatedProducts(product.category.slug, product.slug, 4), getProductReviews(product.id)]);
 
   return (
     <main className="flex flex-col pb-20">
-      <ProductJsonLd product={product} />
+      <ProductJsonLd product={product} rating={reviews.totalCount > 0 ? { average: reviews.averageRating, count: reviews.totalCount } : undefined} />
       <nav aria-label="Đường dẫn" className="pad flex gap-2 pt-5 text-[12px] text-muted lg:pt-6">
         <Link href="/">Trang chủ</Link>
         {product.breadcrumb.map((b) => (
@@ -112,15 +115,29 @@ async function ProductDetailPage({ product }: { product: ProductDetail }) {
             </details>
             <details className="group border-y border-line">
               <summary className="flex min-h-13 cursor-pointer list-none items-center justify-between text-[12px] font-medium uppercase tracking-[0.12em] [&::-webkit-details-marker]:hidden">
-                Đánh giá
+                {reviews.totalCount > 0 ? `Đánh giá (${reviews.totalCount})` : "Đánh giá"}
                 <span aria-hidden="true" className="text-lg font-light group-open:hidden">+</span>
                 <span aria-hidden="true" className="hidden text-lg font-light group-open:inline">–</span>
               </summary>
-              <p className="m-0 pb-5 text-[14px] text-muted">Chưa có đánh giá. Khách đã mua có thể đánh giá sau khi nhận hàng.</p>
+              <div className="flex items-center gap-3 pb-5 text-[14px]">
+                {reviews.totalCount > 0 ? (
+                  <>
+                    <Stars value={reviews.averageRating} />
+                    <span>{reviews.averageRating.toLocaleString("vi-VN")}/5</span>
+                  </>
+                ) : (
+                  <span className="text-muted">Chưa có đánh giá.</span>
+                )}
+                <a href="#danh-gia" className="ul ml-auto text-[12px]">
+                  Xem đánh giá
+                </a>
+              </div>
             </details>
           </div>
         </div>
       </div>
+
+      <ProductReviews data={reviews} productSlug={product.slug} />
 
       {related.length > 0 ? (
         <section className="pad pt-20 lg:pt-24">

@@ -52,7 +52,7 @@ npm run dev | npm run build | npm run lint
 docker compose -f local/docker-compose.yml up -d
 ```
 
-Port local: gateway 8080, customer 8091, catalog 8092, order 8093, notification 8094, Keycloak 8180, Valkey 6382, Mailpit UI 8026, storefront 3000 (808x, 6379–6381, 8025 đã bị các dự án khác trên máy chiếm). Trên K8s mọi service chạy 8080 (`SERVER_PORT` từ ConfigMap).
+Port local: gateway 8080, customer 8091, catalog 8092, order 8093, notification 8094, Keycloak 8180, Valkey 6382, Mailpit UI 8026, SeaweedFS S3 8333, storefront 3000 (808x, 6379–6381, 8025 đã bị các dự án khác trên máy chiếm). Trên K8s mọi service chạy 8080 (`SERVER_PORT` từ ConfigMap).
 
 ## Phiên bản
 
@@ -73,6 +73,7 @@ Boot 4 đổi tên starter: dùng `spring-boot-starter-webmvc`, `spring-boot-sta
 - Mỗi service là một modular monolith: **mỗi package con trực tiếp của package gốc** (ví dụ `vn.ecommerce.catalog.inventory`) là một module Spring Modulith. Module chỉ gọi nhau qua type ở package gốc của module hoặc qua event. `ModularityTests` (`ApplicationModules.verify()`) làm build fail khi vi phạm. Đừng tạo package con mới ở gốc cho code hạ tầng, vì nó sẽ thành module; đặt config ở package gốc của service.
 - Module đã chia sẵn theo thiết kế: customer `{profile,address,wishlist,staffadmin}`, catalog `{product,inventory,search,review,media,messaging}`, order `{cart,promotion,checkout,orders,payment,shipping}`, notification `{dispatch,channel,template}`.
 - Mẫu gọi chéo module (catalog): `product` để lộ `VariantLookupApi`/`VariantInfo` ở package gốc; `inventory` dùng nó thay vì join bảng của product. Module `messaging` cung cấp `ProcessedEvents.markProcessed(eventId, consumer)` (propagation MANDATORY, gọi trong transaction của consumer) và exchange + converter JSON; mỗi module consumer tự khai báo queue + DLQ (`OrderEventsTopology`).
+- catalog `review` + `media` (E7.1, B-29): quyền đánh giá ghi từ event `order.delivered` (queue `catalog.review-events`), đánh giá chờ duyệt ở `/api/admin/catalog/reviews`. `MediaApi` ký URL PUT bằng AWS SDK v2 (chỉ presigner + `url-connection-client`); kho ảnh local là SeaweedFS (`local/docker-compose.yml`, bucket tự tạo khi `MEDIA_CREATE_BUCKET=true`), prod là R2.
 - Thao tác tồn kho (`ReservationServiceImpl`) không dùng `@Transactional` ở class: mỗi lần thử là một `TransactionTemplate.execute` riêng để retry khi optimistic lock thất bại; test tranh chấp thật ở `InventoryReservationDbTest` (`@SpringBootTest` + Testcontainers, tắt listener RabbitMQ và externalization bằng property).
 
 ### Thư viện common (tự đăng ký qua `AutoConfiguration.imports`)
