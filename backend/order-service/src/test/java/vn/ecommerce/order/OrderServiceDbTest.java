@@ -101,7 +101,7 @@ class OrderServiceDbTest {
         when(catalog.lookup(anyList())).thenReturn(List.of(
                 new SkuSnapshot(RING, UUID.randomUUID(), "nhan-moissanite", "Nhẫn moissanite", "Bạc / 6", "RING-6", new BigDecimal("450000"), null, "/img/r.jpg", 5, true),
                 new SkuSnapshot(NECKLACE, UUID.randomUUID(), "day-chuyen", "Dây chuyền", "Bạc", "NECK", new BigDecimal("300000"), null, "/img/n.jpg", 3, true)));
-        when(catalog.reserve(any(), anyList())).thenAnswer(inv -> new ReservationOutcome(inv.getArgument(0), "RESERVED", Instant.now().plus(Duration.ofMinutes(15))));
+        when(catalog.reserve(any(), any(), anyList())).thenAnswer(inv -> new ReservationOutcome(inv.getArgument(0), "RESERVED", Instant.now().plus(Duration.ofMinutes(15))));
     }
 
     @AfterEach
@@ -131,7 +131,8 @@ class OrderServiceDbTest {
         assertThat(order.total()).isEqualByComparingTo("710000");
         assertThat(order.history()).extracting(OrderView.History::to).containsExactly("PENDING", "CONFIRMED");
         assertThat(order.items()).hasSize(2).first().satisfies(i -> assertThat(i.engraving()).isEqualTo("LAN"));
-        verify(catalog).reserve(order.id(), List.of(new ReserveLine(RING, 1), new ReserveLine(NECKLACE, 1)));
+        verify(catalog).reserve(order.id(), CUSTOMER.toString(),
+                List.of(new ReserveLine(RING, 1, new BigDecimal("450000")), new ReserveLine(NECKLACE, 1, new BigDecimal("300000"))));
         assertThat(jdbc.queryForObject("select count(*) from event_publication", Long.class)).as("order.confirmed vào outbox").isPositive();
         assertThat(jdbc.queryForObject("select status from payment where order_id = ?", String.class, order.id())).isEqualTo("INIT");
         assertThat(promotionService.get(voucher.id()).usedCount()).isEqualTo(1);

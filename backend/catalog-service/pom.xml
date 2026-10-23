@@ -15,6 +15,11 @@
     <description>Danh mục, sản phẩm, SKU, tồn kho, tìm kiếm, review, media</description>
 
     <dependencies>
+        <!-- Module flashsale (E7.2): giữ suất giá flash bằng Lua trên Valkey -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
         <!-- Module media (E7.1): URL ký sẵn để trình duyệt upload thẳng ảnh lên R2/S3 -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>

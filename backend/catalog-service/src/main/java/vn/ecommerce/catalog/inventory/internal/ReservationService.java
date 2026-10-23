@@ -17,7 +17,12 @@ public interface ReservationService {
      * @throws vn.ecommerce.common.web.error.ConflictException {@code inventory.insufficient} khi thiếu hàng,
      *         {@code inventory.sku-not-sellable} khi SKU không bán, {@code inventory.busy} khi thử lại quá số lần
      */
-    ReservationResult reserve(UUID orderId, List<ReserveRequest.Line> lines);
+    ReservationResult reserve(UUID orderId, String customerId, List<ReserveRequest.Line> lines);
+
+    /** Giữ hàng không gắn khách (giới hạn mỗi khách của flash sale không áp dụng). */
+    default ReservationResult reserve(UUID orderId, List<ReserveRequest.Line> lines) {
+        return reserve(orderId, null, lines);
+    }
 
     ReservationResult commit(UUID orderId);
 

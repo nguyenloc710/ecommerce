@@ -76,6 +76,6 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 ## E7. Tăng trưởng
 
 - [x] E7.1 Review có ảnh + duyệt (B-29): module `review` (quyền đánh giá từ order.delivered, gửi đánh giá, duyệt/ẩn có audit) + `media` (URL ký sẵn, trình duyệt PUT thẳng lên R2/SeaweedFS); trang sản phẩm có tóm tắt sao, danh sách, form gửi kèm ảnh, JSON-LD aggregateRating; admin `/admin/danh-gia`. Đã chạy đầu cuối local (SeaweedFS + RabbitMQ + Keycloak)
-- [ ] E7.2 Flash sale giữ hàng Redis
+- [x] E7.2 Flash sale (B-30): module `flashsale` (chương trình có giờ + suất theo SKU, giới hạn mỗi khách), giá áp qua SPI `PriceAdjuster`, giữ suất bằng Lua trên Valkey qua SPI `ReservationGuard`, DB là nguồn sự thật; trang chủ có khối flash sale đếm ngược, trang sản phẩm đếm ngược tới hết giá, admin `/admin/flash-sale` (tạo, theo dõi đã bán/đang giữ, dừng)
 - [ ] E7.3 Giá vàng theo ngày (B-09)
 - [ ] E7.4 Báo cáo doanh thu

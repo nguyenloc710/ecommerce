@@ -37,6 +37,9 @@ export type ProductVariantView = {
   price: number;
   compareAtPrice: number | null;
   weightGram: number | null;
+  /** Mã nhãn giá đang áp (FLASH_SALE) và giờ hết hiệu lực; null khi bán giá thường. */
+  priceLabel: string | null;
+  priceEndsAt: string | null;
 };
 
 export type ProductDetail = {
@@ -66,6 +69,7 @@ const LABEL_TEXT: Record<string, { text: string; tone: ProductCardData["labelTon
   NEW: { text: "Mới", tone: "default" },
   BESTSELLER: { text: "Bán chạy", tone: "default" },
   SOLD_OUT: { text: "Hết hàng", tone: "default" },
+  FLASH_SALE: { text: "Flash sale", tone: "sale" },
 };
 
 /** Tên màu trong option_values → màu chấm trên thẻ (UI-07). Tên lạ dùng xám trung tính. */

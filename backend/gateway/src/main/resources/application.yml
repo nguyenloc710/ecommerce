@@ -41,7 +41,7 @@ spring:
             - id: catalog
               uri: ${CATALOG_SERVICE_URL:http://localhost:8092}
               predicates:
-                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/reviews/**,/api/media/**,/api/inventory/**,/api/admin/catalog/**,/api/admin/inventory/**
+                - Path=/api/products/**,/api/categories/**,/api/brands/**,/api/reviews/**,/api/flash-sales/**,/api/media/**,/api/inventory/**,/api/admin/catalog/**,/api/admin/inventory/**
               filters:
                 - name: RequestRateLimiter
                   args:

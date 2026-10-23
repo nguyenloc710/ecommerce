@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Countdown } from "@/components/flash/countdown";
 import type { Availability, ProductDetail } from "@/lib/catalog-shared";
 import { colorHex, optionLabel } from "@/lib/catalog-shared";
 import { useCartStore } from "@/lib/cart-store";
@@ -81,6 +82,13 @@ export function BuyBox({ product, availability, showEngraving }: Props) {
         ) : null}
         {product.pricingType === "GOLD_RATE" ? <span className="text-[12px] text-muted">· theo giá vàng ngày</span> : null}
       </div>
+      {variant?.priceLabel === "FLASH_SALE" && variant.priceEndsAt ? (
+        <div className="-mt-2 flex items-center gap-2 text-[12px] text-sale">
+          <span className="eyebrow text-[10px]">Flash sale</span>
+          <span>kết thúc sau</span>
+          <Countdown endsAt={variant.priceEndsAt} />
+        </div>
+      ) : null}
 
       {product.options.map((option) => (
         <div key={option.name} className="flex flex-col gap-2.5">

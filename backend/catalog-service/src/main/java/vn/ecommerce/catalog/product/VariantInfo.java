@@ -9,10 +9,12 @@ import java.util.UUID;
  *
  * @param sellable  variant và sản phẩm đều ACTIVE, chưa xóa
  * @param imageUrl  ảnh theo variant nếu có, không thì ảnh đầu của sản phẩm; null nếu chưa có ảnh
+ * @param price     giá bán đang hiệu lực (đã áp {@link PriceAdjuster}, ví dụ flash sale)
+ * @param listPrice giá niêm yết của variant trước mọi điều chỉnh
  */
 public record VariantInfo(UUID skuId, UUID productId, String productSlug, String productName, String skuCode,
                           Map<String, String> optionValues, BigDecimal price, BigDecimal compareAtPrice,
-                          String imageUrl, boolean sellable) {
+                          String imageUrl, boolean sellable, BigDecimal listPrice) {
 
     /** Nhãn hiển thị cho dòng giỏ/đơn, ví dụ {@code Bạc / 6}. */
     public String variantLabel() {

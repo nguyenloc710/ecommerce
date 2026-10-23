@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FlashSaleSection } from "@/components/flash/flash-sale-section";
 import { ProductCard } from "@/components/product/product-card";
 import { CoverImage } from "@/components/ui/cover-image";
 import { getCategoryTree, getNewArrivals, iconFor, leafCategories, toneFor } from "@/lib/catalog";
@@ -58,6 +59,8 @@ export default async function HomePage() {
             </CoverImage>
           </Link>
         </section>
+
+        <FlashSaleSection />
 
         {/* Mới về */}
         <section className="pad pt-8 lg:pt-24">

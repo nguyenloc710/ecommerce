@@ -92,7 +92,7 @@ class CheckoutServiceImplTest {
     @Test
     void placeOrder_cod_reservesAggregatedLines_placesConfirmedOrder_andClearsCart() {
         when(orders.findByIdempotencyKey(CUSTOMER, "key-1")).thenReturn(Optional.empty());
-        when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
+        when(catalog.reserve(any(), any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
         when(orders.place(any())).thenAnswer(inv -> orderView(inv.getArgument(0)));
         when(payments.initiate(argThat(r -> r.method() == PaymentMethod.COD))).thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.COD, "INIT", null));
 
@@ -103,8 +103,8 @@ class CheckoutServiceImplTest {
         assertThat(result.replayed()).isFalse();
         assertThat(result.payUrl()).isNull();
         ArgumentCaptor<List<ReserveLine>> reserved = ArgumentCaptor.forClass(List.class);
-        verify(catalog).reserve(any(), reserved.capture());
-        assertThat(reserved.getValue()).containsExactly(new ReserveLine(RING, 2), new ReserveLine(NECKLACE, 1));
+        verify(catalog).reserve(any(), eq(CUSTOMER.toString()), reserved.capture());
+        assertThat(reserved.getValue()).containsExactly(new ReserveLine(RING, 2, new BigDecimal("450000")), new ReserveLine(NECKLACE, 1, new BigDecimal("300000")));
 
         ArgumentCaptor<PlaceOrderCommand> placed = ArgumentCaptor.forClass(PlaceOrderCommand.class);
         verify(orders).place(placed.capture());
@@ -122,7 +122,7 @@ class CheckoutServiceImplTest {
     @Test
     void placeOrder_online_returnsPayUrl_andAwaitsPayment() {
         when(orders.findByIdempotencyKey(CUSTOMER, "key-2")).thenReturn(Optional.empty());
-        when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
+        when(catalog.reserve(any(), any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
         when(orders.place(any())).thenAnswer(inv -> orderView(inv.getArgument(0)));
         when(payments.initiate(argThat(r -> r.method() == PaymentMethod.MOCK_ONLINE)))
                 .thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.MOCK_ONLINE, "PENDING", "http://pay/x"));
@@ -162,7 +162,7 @@ class CheckoutServiceImplTest {
         assertThatThrownBy(() -> service.placeOrder(request(List.of(line(NECKLACE, 2, null)), "COD", null), "key-3"))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage(CheckoutErrorKeys.INSUFFICIENT_STOCK);
-        verify(catalog, never()).reserve(any(), anyList());
+        verify(catalog, never()).reserve(any(), any(), anyList());
         verify(orders, never()).place(any());
         verify(payments, never()).initiate(any());
     }
@@ -170,13 +170,13 @@ class CheckoutServiceImplTest {
     @Test
     void placeOrder_whenOrderWriteFails_releasesReservation() {
         when(orders.findByIdempotencyKey(any(), anyString())).thenReturn(Optional.empty());
-        when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
+        when(catalog.reserve(any(), any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
         when(orders.place(any())).thenThrow(new IllegalStateException("db down"));
 
         assertThatThrownBy(() -> service.placeOrder(request(List.of(line(RING, 1, null)), "COD", null), "key-4"))
                 .isInstanceOf(IllegalStateException.class);
         ArgumentCaptor<UUID> reservedId = ArgumentCaptor.forClass(UUID.class);
-        verify(catalog).reserve(reservedId.capture(), anyList());
+        verify(catalog).reserve(reservedId.capture(), any(), anyList());
         verify(catalog).release(reservedId.getValue());
     }
 
@@ -185,7 +185,7 @@ class CheckoutServiceImplTest {
         when(orders.findByIdempotencyKey(any(), anyString())).thenReturn(Optional.empty());
         UUID voucherId = UUID.randomUUID();
         when(promotions.quote("SALE10", CUSTOMER, new BigDecimal("450000"))).thenReturn(new DiscountQuote(voucherId, "SALE10", new BigDecimal("45000"), null));
-        when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
+        when(catalog.reserve(any(), any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
         when(orders.place(any())).thenAnswer(inv -> orderView(inv.getArgument(0)));
         when(payments.initiate(any())).thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.COD, "INIT", null));
 
@@ -232,14 +232,14 @@ class CheckoutServiceImplTest {
         assertThatThrownBy(() -> service.placeOrder(request(List.of(line(RING, 1, null)), "VNPAY", null), "key-7"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage(CheckoutErrorKeys.PAYMENT_METHOD_UNAVAILABLE);
-        verify(catalog, never()).reserve(any(), anyList());
+        verify(catalog, never()).reserve(any(), any(), anyList());
         verify(orders, never()).place(any());
     }
 
     @Test
     void placeOrder_forwardsClientIpToPayment() {
         when(orders.findByIdempotencyKey(any(), anyString())).thenReturn(Optional.empty());
-        when(catalog.reserve(any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
+        when(catalog.reserve(any(), any(), anyList())).thenReturn(new ReservationOutcome(null, "RESERVED", Instant.now()));
         when(orders.place(any())).thenAnswer(inv -> orderView(inv.getArgument(0)));
         when(payments.initiate(any())).thenReturn(new PaymentInitResult(UUID.randomUUID(), PaymentMethod.MOCK_ONLINE, "PENDING", "http://pay/x"));
 

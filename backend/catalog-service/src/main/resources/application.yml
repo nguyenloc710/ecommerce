@@ -13,6 +13,12 @@ spring:
   messages:
     basename: messages,common-messages
     fallback-to-system-locale: false
+  # Valkey (E7.2): suất flash sale; cùng instance với rate limit của gateway (local 6382)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6382}
+      timeout: 2s
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/catalog_db}
     username: ${DB_USERNAME:catalog}
@@ -81,6 +87,10 @@ ecommerce:
     upload-expiry: 10m
     max-review-image-size: 5MB
     allowed-image-types: [image/jpeg, image/png, image/webp]
+  flash-sale:
+    # Khóa Redis giữ thêm sau giờ kết thúc để đơn đang thanh toán vẫn trả suất được
+    key-grace: 1h
+    max-items-per-sale: 50
   review:
     max-images: 5
     default-page-size: 10
@@ -90,6 +100,7 @@ ecommerce:
       - /api/categories/**
       - /api/brands/**
       - /api/reviews/**
+      - /api/flash-sales/**
       - /api/inventory/**
 
 management:

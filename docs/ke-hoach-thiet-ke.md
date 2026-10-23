@@ -256,6 +256,17 @@ reservation    (id, order_id, sku_id, qty, status RESERVED|COMMITTED|RELEASED, e
 - `available = on_hand - reserved`, cập nhật bằng Optimistic Locking (`@Version`).
 - Job chạy mỗi phút để nhả các reservation đã hết hạn.
 
+**Flash sale (module `flashsale`, E7.2, B-30):**
+```
+flash_sale      (id, name, starts_at, ends_at, status ACTIVE|CANCELLED, version)
+flash_sale_item (flash_sale_id, sku_id, sale_price, quota, sold, per_customer_limit)   unique(sale, sku)
+flash_sale_hold (order_id, flash_sale_item_id, customer_id, quantity, status HELD|COMMITTED|RELEASED)
+```
+- Đảo phụ thuộc bằng hai SPI ở package gốc: `product.PriceAdjuster` (flashsale báo giá đang hiệu lực, product áp vào trang sản phẩm, danh sách, `VariantInfo`; giá gốc thành giá gạch, nhãn `FLASH_SALE`) và `inventory.ReservationGuard` (inventory gọi `acquire` trước khi giữ hàng, `commit`/`release` sau khi ghi kho xong).
+- Giá flash chỉ hiện khi chương trình đang chạy và còn suất theo DB (`quota - sold - đang giữ`). Hết suất thì quay về giá thường; khách đặt giá thường không cần suất (order-service gửi kèm `unitPrice` mỗi dòng, chỉ dòng có đơn giá ≤ giá sale mới giữ suất).
+- Giữ suất: một script Lua trên Valkey kiểm tra và trừ suất còn + suất của khách cho mọi dòng (tất cả hoặc không). Khóa `flash:{itemId}:remaining`, `flash:{itemId}:cust:{sub}` tự khởi tạo từ DB nếu chưa có (`SET NX`), sống tới `ends_at + 1h`. DB (`flash_sale_hold`, `sold` tăng nguyên tử khi đơn xác nhận) là nguồn sự thật; Valkey lỗi → `503 flashsale.unavailable` (không bán vượt suất).
+- API: `GET /api/flash-sales/current` (công khai), `/api/admin/catalog/flash-sales` (tạo, xem, dừng; ghi `admin_audit_log`). Chương trình đã tạo không sửa giá/suất; một SKU không nằm trong hai chương trình trùng giờ.
+
 **Tìm kiếm (thay OpenSearch):**
 - Cột `search_vector tsvector` sinh từ `unaccent(name || brand || category)`, index GIN, nên tìm được tiếng Việt không dấu.
 - `pg_trgm` cho gợi ý khi gõ và chịu được lỗi chính tả nhẹ.
@@ -263,7 +274,7 @@ reservation    (id, order_id, sku_id, qty, status RESERVED|COMMITTED|RELEASED, e
 
 **API nội bộ cho order-service** (yêu cầu token client credentials có role `INTERNAL`):
 - `POST /internal/skus/lookup` (lấy giá, tên, trạng thái theo danh sách SKU)
-- `POST /internal/reservations` (idempotent theo `orderId`)
+- `POST /internal/reservations` (idempotent theo `orderId`; kèm `customerId` và `unitPrice` từng dòng cho flash sale)
 
 ### 7.5. order-service
 
@@ -600,7 +611,7 @@ ecommerce/
 │   ├── customer-service/
 │   │   └── src/main/java/.../customer/{profile,address,wishlist,staffadmin}/
 │   ├── catalog-service/
-│   │   └── src/main/java/.../catalog/{product,inventory,search,review,media}/
+│   │   └── src/main/java/.../catalog/{product,inventory,search,review,media,flashsale}/
 │   ├── order-service/
 │   │   └── src/main/java/.../order/{cart,promotion,checkout,order,payment,shipping}/
 │   └── notification-service/

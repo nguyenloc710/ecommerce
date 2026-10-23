@@ -48,10 +48,10 @@ class CatalogRestClient implements CatalogClient {
     }
 
     @Override
-    public ReservationOutcome reserve(UUID orderId, List<ReserveLine> lines) {
+    public ReservationOutcome reserve(UUID orderId, String customerId, List<ReserveLine> lines) {
         try {
             ReservationOutcome outcome = client.post().uri("/internal/reservations")
-                    .body(Map.of("orderId", orderId, "lines", lines)).retrieve().body(ReservationOutcome.class);
+                    .body(new ReserveBody(orderId, customerId, lines)).retrieve().body(ReservationOutcome.class);
             if (outcome == null) {
                 throw new CatalogUnavailableException();
             }
@@ -90,5 +90,9 @@ class CatalogRestClient implements CatalogClient {
     private CatalogUnavailableException unavailable(String operation, RestClientException cause) {
         log.error("catalog-service lỗi ở {}: {}", operation, cause.getMessage());
         return new CatalogUnavailableException();
+    }
+
+    /** Body của {@code POST /internal/reservations} (khớp {@code ReserveRequest} của catalog). */
+    private record ReserveBody(UUID orderId, String customerId, List<ReserveLine> lines) {
     }
 }

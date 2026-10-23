@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
 import type { AdminOrderRow, AdminReviewRow, BrandOption, CategoryOption, InventoryRow, Paged, ProductAdmin, ProductAdminRow } from "@/lib/admin-shared";
 import type { OrderStatus, OrderView } from "@/lib/checkout-shared";
+import type { AdminFlashSaleDetail, AdminFlashSaleRow } from "@/lib/flash-sale-shared";
 import { authFetch } from "@/lib/session";
 
 /** Đọc dữ liệu quản trị (không cache: nhân viên cần thấy số liệu mới nhất). */
@@ -46,3 +47,7 @@ export const listReviews = (o: { status: string; page: number }) =>
 
 export const listInventory = (o: { q?: string; lowStock?: boolean; page: number }) =>
   get<Paged<InventoryRow>>(`/api/admin/inventory${qs({ q: o.q, lowStock: o.lowStock, page: o.page, size: 50 })}`);
+
+export const listFlashSales = (page: number) => get<Paged<AdminFlashSaleRow>>(`/api/admin/catalog/flash-sales${qs({ page, size: 20 })}`);
+
+export const getFlashSale = (id: string) => orNotFound(get<AdminFlashSaleDetail>(`/api/admin/catalog/flash-sales/${encodeURIComponent(id)}`));

@@ -10,6 +10,7 @@ const items = [
   { href: "/admin/san-pham", label: "Sản phẩm" },
   { href: "/admin/ton-kho", label: "Tồn kho" },
   { href: "/admin/danh-gia", label: "Đánh giá" },
+  { href: "/admin/flash-sale", label: "Flash sale" },
 ];
 
 /** Menu trái trang quản trị; mục đang mở tô nền. Trên mobile thành hàng ngang cuộn được. */

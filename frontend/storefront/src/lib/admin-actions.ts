@@ -13,6 +13,7 @@ import {
   type VariantFormValues,
 } from "@/lib/admin-shared";
 import { CATALOG_CACHE_TAG } from "@/lib/catalog-shared";
+import { flashSaleSchema, type FlashSaleFormValues } from "@/lib/flash-sale-shared";
 import type { OrderStatus } from "@/lib/checkout-shared";
 import { authFetch } from "@/lib/session";
 
@@ -178,6 +179,48 @@ export async function moderateReview(reviewId: string, action: "approve" | "reje
   if (action === "reject" && !reason?.trim()) return { ok: false, message: "Vui lòng nhập lý do." };
   try {
     await send(`/api/admin/catalog/reviews/${encodeURIComponent(reviewId)}/${action}`, "POST", action === "reject" ? { reason: reason!.trim().slice(0, 255) } : undefined);
+    refreshStorefront();
+    return { ok: true };
+  } catch (error) {
+    return toError(error);
+  }
+}
+
+// ---- Flash sale (E7.2) ----
+
+/** Tìm SKU để thêm vào chương trình (dùng lại API tồn kho: tìm theo mã SKU hoặc tên sản phẩm). */
+export async function searchSkus(q: string): Promise<Result<{ items: InventoryRow[] }>> {
+  if (q.trim().length < 2) return { ok: true, items: [] };
+  try {
+    const page = await authFetch<{ items: InventoryRow[] }>(`/api/admin/inventory?q=${encodeURIComponent(q.trim())}&size=10`, { cache: "no-store" });
+    return { ok: true, items: page.items };
+  } catch (error) {
+    return toError(error);
+  }
+}
+
+/** Tạo chương trình; {@code values.startsAt/endsAt} đã là ISO do form đổi theo giờ trình duyệt. Giá flash hiện ngay khi tới giờ. */
+export async function createFlashSale(values: FlashSaleFormValues): Promise<Result<{ id: string }>> {
+  const parsed = flashSaleSchema.safeParse(values);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ." };
+  const v = parsed.data;
+  try {
+    const created = await send<{ id: string }>("/api/admin/catalog/flash-sales", "POST", {
+      name: v.name,
+      startsAt: v.startsAt,
+      endsAt: v.endsAt,
+      items: v.items.map((i) => ({ skuId: i.skuId, salePrice: Number(i.salePrice), quota: Number(i.quota), perCustomerLimit: Number(i.perCustomerLimit) })),
+    });
+    refreshStorefront();
+    return { ok: true, id: created.id };
+  } catch (error) {
+    return toError(error);
+  }
+}
+
+export async function cancelFlashSale(id: string, version: number): Promise<Result> {
+  try {
+    await send(`/api/admin/catalog/flash-sales/${encodeURIComponent(id)}/cancel`, "POST", { version });
     refreshStorefront();
     return { ok: true };
   } catch (error) {

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,6 +31,7 @@ import vn.ecommerce.catalog.inventory.internal.dto.ReservationResult;
 import vn.ecommerce.catalog.inventory.internal.dto.ReserveRequest;
 import vn.ecommerce.catalog.inventory.internal.repo.InventoryItemRepository;
 import vn.ecommerce.catalog.inventory.internal.repo.ReservationRepository;
+import vn.ecommerce.catalog.inventory.ReservationGuard;
 import vn.ecommerce.catalog.messaging.ProcessedEvents;
 import vn.ecommerce.catalog.product.VariantInfo;
 import vn.ecommerce.catalog.product.VariantLookupApi;
@@ -45,6 +47,7 @@ class ReservationServiceImplTest {
     @Mock ReservationRepository reservationRepository;
     @Mock VariantLookupApi variantLookupApi;
     @Mock ProcessedEvents processedEvents;
+    @Mock ReservationGuard guard;
 
     private ReservationServiceImpl service;
 
@@ -61,11 +64,11 @@ class ReservationServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new ReservationServiceImpl(itemRepository, reservationRepository, variantLookupApi, processedEvents,
-                directTemplate(), new InventoryProperties(Duration.ofMinutes(15), 3, 3, 200));
+                directTemplate(), new InventoryProperties(Duration.ofMinutes(15), 3, 3, 200), List.of(guard));
     }
 
     private VariantInfo sellable(UUID skuId) {
-        return new VariantInfo(skuId, UUID.randomUUID(), "p", "P", "SKU", Map.of("size", "6"), BigDecimal.TEN, null, null, true);
+        return new VariantInfo(skuId, UUID.randomUUID(), "p", "P", "SKU", Map.of("size", "6"), BigDecimal.TEN, null, null, true, BigDecimal.TEN);
     }
 
     @Test
@@ -82,6 +85,28 @@ class ReservationServiceImplTest {
         verify(itemRepository, never()).saveAll(any());
         verify(reservationRepository, never()).saveAll(any());
         assertThat(item.getReserved()).isZero();
+    }
+
+    @Test
+    void reserve_guardRejects_inventoryUntouched() {
+        doThrow(new ConflictException("flashsale.sold-out")).when(guard).acquire(any(), any(), any());
+
+        assertThatThrownBy(() -> service.reserve(ORDER, "kh-1", List.of(new ReserveRequest.Line(SKU, 1, BigDecimal.ONE))))
+                .hasFieldOrPropertyWithValue("messageKey", "flashsale.sold-out");
+        verify(reservationRepository, never()).findByOrderId(any());
+        verify(guard, never()).release(any());
+    }
+
+    @Test
+    void reserve_passesMergedLinesWithLowestPrice_andReleasesGuardWhenInventoryFails() {
+        when(reservationRepository.findByOrderId(ORDER)).thenReturn(List.of());
+        when(variantLookupApi.findVariants(anyCollection())).thenReturn(List.of());
+
+        assertThatThrownBy(() -> service.reserve(ORDER, "kh-1",
+                List.of(new ReserveRequest.Line(SKU, 1, BigDecimal.TEN), new ReserveRequest.Line(SKU, 2, BigDecimal.ONE))))
+                .hasFieldOrPropertyWithValue("messageKey", InventoryErrorKeys.SKU_NOT_SELLABLE);
+        verify(guard).acquire(ORDER, "kh-1", List.of(new ReservationGuard.Line(SKU, 3, BigDecimal.ONE)));
+        verify(guard).release(ORDER);
     }
 
     @Test

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.ecommerce.catalog.product.PriceAdjuster;
 import vn.ecommerce.catalog.product.VariantInfo;
 import vn.ecommerce.catalog.product.VariantLookupApi;
 import vn.ecommerce.catalog.product.internal.domain.ProductStatus;
@@ -27,6 +28,7 @@ class VariantLookupServiceImpl implements VariantLookupApi {
 
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
+    private final PriceAdjustments priceAdjustments;
 
     @Override
     public List<VariantInfo> findVariants(Collection<UUID> skuIds) {
@@ -38,11 +40,14 @@ class VariantLookupServiceImpl implements VariantLookupApi {
                 .collect(Collectors.toMap(ImageRow::variantId, ImageRow::url, (first, later) -> first));
         Map<UUID, String> byProduct = images.stream()
                 .collect(Collectors.toMap(ImageRow::productId, ImageRow::url, (first, later) -> first));
+        // Giá đang hiệu lực (flash sale...): order-service chốt giá này vào đơn
+        Map<UUID, PriceAdjuster.AdjustedPrice> adjusted = priceAdjustments.current(rows.stream().map(VariantInfoRow::skuId).toList());
         return rows.stream().map(r -> new VariantInfo(
                 r.skuId(), r.productId(), r.productSlug(), r.productName(), r.skuCode(), r.optionValues(),
-                r.price(), r.compareAtPrice(),
+                adjusted.containsKey(r.skuId()) ? adjusted.get(r.skuId()).price() : r.price(),
+                adjusted.containsKey(r.skuId()) ? PriceAdjustments.compareAtWhenAdjusted(r.price(), r.compareAtPrice()) : r.compareAtPrice(),
                 byVariant.getOrDefault(r.skuId(), byProduct.get(r.productId())),
-                r.variantStatus() == VariantStatus.ACTIVE && r.productStatus() == ProductStatus.ACTIVE)).toList();
+                r.variantStatus() == VariantStatus.ACTIVE && r.productStatus() == ProductStatus.ACTIVE, r.price())).toList();
     }
 
     @Override

@@ -175,6 +175,6 @@ class ReviewServiceImplTest {
     }
 
     private static VariantInfo variant(UUID sku) {
-        return new VariantInfo(sku, PRODUCT, "nhan", "Nhẫn", "RNG", Map.of("size", "6"), BigDecimal.TEN, null, null, true);
+        return new VariantInfo(sku, PRODUCT, "nhan", "Nhẫn", "RNG", Map.of("size", "6"), BigDecimal.TEN, null, null, true, BigDecimal.TEN);
     }
 }

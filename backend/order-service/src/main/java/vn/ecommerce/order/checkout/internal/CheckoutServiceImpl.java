@@ -103,7 +103,7 @@ class CheckoutServiceImpl implements CheckoutService {
         UUID orderId = UUID.randomUUID();
         MDC.put("orderId", orderId.toString());
         try {
-            catalog.reserve(orderId, priced.toReserveLines());
+            catalog.reserve(orderId, customerId.toString(), priced.toReserveLines());
             PlaceOrderCommand command = new PlaceOrderCommand(orderId, customerId, idempotencyKey, priced.toOrderLines(), priced.subtotal(),
                     voucher == null ? BigDecimal.ZERO : voucher.discount(), voucher == null ? null : voucher.code(), option.fee(), option.carrier(),
                     method.name(), !method.online(), address, contactEmail, request.note());

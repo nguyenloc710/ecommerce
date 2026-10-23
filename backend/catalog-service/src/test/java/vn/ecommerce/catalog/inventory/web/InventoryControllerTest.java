@@ -70,7 +70,7 @@ class InventoryControllerTest {
     void reserve_validatesBody_andReturnsResult() throws Exception {
         UUID order = UUID.randomUUID();
         UUID sku = UUID.randomUUID();
-        when(reservationService.reserve(any(), any())).thenReturn(new ReservationResult(order, "RESERVED", null, List.of()));
+        when(reservationService.reserve(any(), any(), any())).thenReturn(new ReservationResult(order, "RESERVED", null, List.of()));
 
         mockMvc.perform(post("/internal/reservations").with(as("INTERNAL")).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"orderId\":\"" + order + "\",\"lines\":[{\"skuId\":\"" + sku + "\",\"quantity\":0}]}"))

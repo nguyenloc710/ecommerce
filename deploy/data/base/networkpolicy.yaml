@@ -62,9 +62,12 @@ spec:
   policyTypes:
     - Ingress
   ingress:
+    # gateway: rate limit; catalog-service: suất flash sale (E7.2)
     - from:
         - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: gateway
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: [gateway, catalog-service]
       ports:
         - port: 6379

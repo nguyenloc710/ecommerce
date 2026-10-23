@@ -20,9 +20,9 @@ record PricedLines(List<PricedLine> lines, BigDecimal subtotal) {
     }
 
     List<ReserveLine> toReserveLines() {
-        Map<UUID, Integer> bySku = lines.stream().collect(Collectors.toMap(l -> l.sku().skuId(), PricedLine::quantity, Integer::sum,
-                java.util.LinkedHashMap::new));
-        return bySku.entrySet().stream().map(e -> new ReserveLine(e.getKey(), e.getValue())).toList();
+        Map<UUID, PricedLine> bySku = lines.stream().collect(Collectors.toMap(l -> l.sku().skuId(), l -> l,
+                (a, b) -> new PricedLine(a.sku(), a.quantity() + b.quantity(), null), java.util.LinkedHashMap::new));
+        return bySku.values().stream().map(l -> new ReserveLine(l.sku().skuId(), l.quantity(), l.sku().price())).toList();
     }
 
     List<UUID> skuIds() {

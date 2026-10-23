@@ -1,11 +1,14 @@
 package vn.ecommerce.catalog.inventory.internal;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -22,6 +25,7 @@ import vn.ecommerce.catalog.inventory.internal.dto.ReservationResult;
 import vn.ecommerce.catalog.inventory.internal.dto.ReserveRequest;
 import vn.ecommerce.catalog.inventory.internal.repo.InventoryItemRepository;
 import vn.ecommerce.catalog.inventory.internal.repo.ReservationRepository;
+import vn.ecommerce.catalog.inventory.ReservationGuard;
 import vn.ecommerce.catalog.messaging.ProcessedEvents;
 import vn.ecommerce.catalog.product.VariantInfo;
 import vn.ecommerce.catalog.product.VariantLookupApi;
@@ -45,10 +49,24 @@ class ReservationServiceImpl implements ReservationService {
     private final ProcessedEvents processedEvents;
     private final TransactionTemplate transactionTemplate;
     private final InventoryProperties properties;
+    /** Module khác chạy kèm giữ hàng (flash sale giữ suất), xem {@link ReservationGuard}. */
+    private final List<ReservationGuard> guards;
 
     @Override
-    public ReservationResult reserve(UUID orderId, List<ReserveRequest.Line> lines) {
+    public ReservationResult reserve(UUID orderId, String customerId, List<ReserveRequest.Line> lines) {
         Map<UUID, Integer> wanted = mergeLines(lines);
+        List<ReservationGuard.Line> guardLines = guardLines(lines, wanted);
+        // Guard từ chối thì ném lỗi luôn, chưa đụng tồn kho
+        guards.forEach(g -> g.acquire(orderId, customerId, guardLines));
+        try {
+            return reserveInventory(orderId, wanted);
+        } catch (RuntimeException e) {
+            afterTx("release", orderId, ReservationGuard::release);
+            throw e;
+        }
+    }
+
+    private ReservationResult reserveInventory(UUID orderId, Map<UUID, Integer> wanted) {
         return withRetry(() -> {
             List<Reservation> existing = reservationRepository.findByOrderId(orderId);
             if (!existing.isEmpty()) {
@@ -80,12 +98,16 @@ class ReservationServiceImpl implements ReservationService {
 
     @Override
     public ReservationResult commit(UUID orderId) {
-        return withRetry(() -> commitInTx(orderId));
+        ReservationResult result = withRetry(() -> commitInTx(orderId));
+        afterTx("commit", orderId, ReservationGuard::commit);
+        return result;
     }
 
     @Override
     public ReservationResult release(UUID orderId) {
-        return withRetry(() -> releaseInTx(orderId));
+        ReservationResult result = withRetry(() -> releaseInTx(orderId));
+        afterTx("release", orderId, ReservationGuard::release);
+        return result;
     }
 
     @Override
@@ -99,24 +121,32 @@ class ReservationServiceImpl implements ReservationService {
 
     @Override
     public boolean commitFromEvent(UUID eventId, UUID orderId) {
-        return withRetry(() -> {
+        boolean applied = withRetry(() -> {
             if (!processedEvents.markProcessed(eventId, CONSUMER)) {
                 return false;
             }
             commitInTx(orderId);
             return true;
         });
+        if (applied) {
+            afterTx("commit", orderId, ReservationGuard::commit);
+        }
+        return applied;
     }
 
     @Override
     public boolean releaseFromEvent(UUID eventId, UUID orderId) {
-        return withRetry(() -> {
+        boolean applied = withRetry(() -> {
             if (!processedEvents.markProcessed(eventId, CONSUMER)) {
                 return false;
             }
             releaseInTx(orderId);
             return true;
         });
+        if (applied) {
+            afterTx("release", orderId, ReservationGuard::release);
+        }
+        return applied;
     }
 
     @Override
@@ -127,6 +157,7 @@ class ReservationServiceImpl implements ReservationService {
         for (UUID orderId : orderIds) {
             try {
                 withRetry(() -> releaseInTx(orderId));
+                afterTx("release", orderId, ReservationGuard::release);
                 released++;
             } catch (RuntimeException ex) {
                 // Một đơn lỗi không chặn các đơn khác; lần chạy sau sẽ thử lại
@@ -137,6 +168,20 @@ class ReservationServiceImpl implements ReservationService {
             log.info("Đã nhả hàng {} đơn quá hạn giữ", released);
         }
         return released;
+    }
+
+    /**
+     * Guard chạy sau khi tồn kho đã ghi xong; lỗi của guard (ví dụ Valkey tạm mất) không được làm hỏng thao tác kho đã
+     * thành công, chỉ cảnh báo. Guard tự idempotent nên lần gọi sau (event lặp, job) có thể bù.
+     */
+    private void afterTx(String action, UUID orderId, BiConsumer<ReservationGuard, UUID> call) {
+        for (ReservationGuard guard : guards) {
+            try {
+                call.accept(guard, orderId);
+            } catch (RuntimeException e) {
+                log.warn("Guard {} {} đơn {} lỗi: {}", guard.getClass().getSimpleName(), action, orderId, e.getMessage());
+            }
+        }
     }
 
     // ---- trong transaction ----
@@ -233,6 +278,13 @@ class ReservationServiceImpl implements ReservationService {
                 log.debug("Optimistic lock lần {}, thử lại", attempt);
             }
         }
+    }
+
+    /** Mỗi SKU một dòng: số lượng đã gộp, đơn giá thấp nhất bên gọi gửi cho SKU đó. */
+    private static List<ReservationGuard.Line> guardLines(List<ReserveRequest.Line> lines, Map<UUID, Integer> wanted) {
+        Map<UUID, BigDecimal> prices = new HashMap<>();
+        lines.stream().filter(l -> l.unitPrice() != null).forEach(l -> prices.merge(l.skuId(), l.unitPrice(), BigDecimal::min));
+        return wanted.entrySet().stream().map(e -> new ReservationGuard.Line(e.getKey(), e.getValue(), prices.get(e.getKey()))).toList();
     }
 
     private static Map<UUID, Integer> mergeLines(List<ReserveRequest.Line> lines) {

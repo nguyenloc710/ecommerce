@@ -69,7 +69,7 @@ class ProductQueryServiceImplTest {
     void setUp() {
         service = new ProductQueryServiceImpl(categoryRepository, brandRepository, productRepository, searchRepository,
                 variantRepository, imageRepository, Mappers.getMapper(ProductMapper.class),
-                new ProductProperties(Duration.ofDays(30), "color"));
+                new ProductProperties(Duration.ofDays(30), "color"), new PriceAdjustments(List.of()));
     }
 
     private void stubCategories() {

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.ecommerce.catalog.product.CategoryTreeNode;
 import vn.ecommerce.catalog.product.FacetsView;
 import vn.ecommerce.catalog.product.PageView;
+import vn.ecommerce.catalog.product.PriceAdjuster.AdjustedPrice;
 import vn.ecommerce.catalog.product.ProductCardView;
 import vn.ecommerce.catalog.product.ProductDetailView;
 import vn.ecommerce.catalog.product.ProductListQuery;
@@ -55,6 +56,7 @@ class ProductQueryServiceImpl implements ProductQueryService {
 
     /** Mã nhãn, FE dịch sang chữ hiển thị (không trả chuỗi tiếng Việt từ API). */
     private static final String LABEL_NEW = "NEW";
+    private static final String LABEL_FLASH_SALE = "FLASH_SALE";
 
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
@@ -64,6 +66,7 @@ class ProductQueryServiceImpl implements ProductQueryService {
     private final ProductImageRepository imageRepository;
     private final ProductMapper mapper;
     private final ProductProperties properties;
+    private final PriceAdjustments priceAdjustments;
 
     @Override
     public List<CategoryTreeNode> categoryTree() {
@@ -81,9 +84,11 @@ class ProductQueryServiceImpl implements ProductQueryService {
         Map<UUID, String> firstImageByProduct = InBatches.query(productIds, imageRepository::findRowsByProductIdIn)
                 .stream().collect(Collectors.toMap(ImageRow::productId, ImageRow::url, (first, later) -> first));
 
+        Map<UUID, AdjustedPrice> adjusted = priceAdjustments.current(variantsByProduct.values().stream().flatMap(List::stream).map(VariantRow::id).toList());
         Instant newSince = Instant.now().minus(properties.newLabelFor());
         List<ProductCardView> cards = page.getContent().stream()
-                .map(row -> toCard(row, variantsByProduct.getOrDefault(row.id(), List.of()), firstImageByProduct.get(row.id()), newSince))
+                .map(row -> toCard(row, applyPrices(variantsByProduct.getOrDefault(row.id(), List.of()), adjusted), firstImageByProduct.get(row.id()), newSince,
+                        variantsByProduct.getOrDefault(row.id(), List.of()).stream().anyMatch(v -> adjusted.containsKey(v.id()))))
                 .toList();
         return new PageView<>(cards, page.getNumber(), page.getSize(), page.getTotalElements(), page.hasNext());
     }
@@ -109,7 +114,7 @@ class ProductQueryServiceImpl implements ProductQueryService {
                 product.getBrand() == null ? null : mapper.toBrandRef(product.getBrand()),
                 mapper.toCategoryRef(product.getCategory()),
                 breadcrumb(product.getCategory()),
-                variants.stream().map(mapper::toVariantView).toList(),
+                adjustVariants(variants.stream().map(mapper::toVariantView).toList()),
                 images,
                 options(variants));
     }
@@ -183,7 +188,7 @@ class ProductQueryServiceImpl implements ProductQueryService {
 
     // ---- sản phẩm ----
 
-    private ProductCardView toCard(ProductRow row, List<VariantRow> variants, String imageUrl, Instant newSince) {
+    private ProductCardView toCard(ProductRow row, List<VariantRow> variants, String imageUrl, Instant newSince, boolean promoted) {
         Optional<VariantRow> cheapest = variants.stream().min(Comparator.comparing(VariantRow::price));
         BigDecimal price = cheapest.map(VariantRow::price).orElse(null);
         BigDecimal compareAt = cheapest.map(VariantRow::compareAtPrice)
@@ -194,8 +199,25 @@ class ProductQueryServiceImpl implements ProductQueryService {
                 .filter(c -> c != null && !c.isBlank())
                 .distinct()
                 .toList();
-        String label = row.publishedAt() != null && row.publishedAt().isAfter(newSince) ? LABEL_NEW : null;
+        String label = promoted ? LABEL_FLASH_SALE : row.publishedAt() != null && row.publishedAt().isAfter(newSince) ? LABEL_NEW : null;
         return new ProductCardView(row.id(), row.slug(), row.name(), price, compareAt, imageUrl, colors, label);
+    }
+
+    /** Variant của thẻ sản phẩm sau khi áp giá điều chỉnh (thẻ lấy giá thấp nhất, giá gốc thành giá gạch). */
+    private static List<VariantRow> applyPrices(List<VariantRow> variants, Map<UUID, AdjustedPrice> adjusted) {
+        return variants.stream().map(v -> {
+            AdjustedPrice a = adjusted.get(v.id());
+            return a == null ? v : new VariantRow(v.productId(), v.id(), a.price(), PriceAdjustments.compareAtWhenAdjusted(v.price(), v.compareAtPrice()),
+                    v.optionValues());
+        }).toList();
+    }
+
+    private List<ProductDetailView.VariantView> adjustVariants(List<ProductDetailView.VariantView> views) {
+        Map<UUID, AdjustedPrice> adjusted = priceAdjustments.current(views.stream().map(ProductDetailView.VariantView::id).toList());
+        return views.stream().map(v -> {
+            AdjustedPrice a = adjusted.get(v.id());
+            return a == null ? v : v.adjusted(a.price(), PriceAdjustments.compareAtWhenAdjusted(v.price(), v.compareAtPrice()), a.label(), a.endsAt());
+        }).toList();
     }
 
     /** Gom option từ variant theo thứ tự xuất hiện: {size: [S, M, L], color: [Đen, Trắng]}. */

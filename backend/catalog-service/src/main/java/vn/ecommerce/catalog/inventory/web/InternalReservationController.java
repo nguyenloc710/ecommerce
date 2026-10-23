@@ -27,7 +27,7 @@ class InternalReservationController {
     @Operation(summary = "Giữ hàng cho đơn (idempotent theo orderId)",
             description = "409 `inventory.insufficient` khi thiếu hàng (không giữ dòng nào), `inventory.sku-not-sellable` khi SKU không bán, `inventory.busy` khi tranh chấp quá nhiều.")
     ReservationResult reserve(@Valid @RequestBody ReserveRequest request) {
-        return reservationService.reserve(request.orderId(), request.lines());
+        return reservationService.reserve(request.orderId(), request.customerId(), request.lines());
     }
 
     @GetMapping("/{orderId}")
