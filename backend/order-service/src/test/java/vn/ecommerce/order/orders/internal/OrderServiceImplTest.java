@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import vn.ecommerce.common.security.CurrentUser;
 import vn.ecommerce.order.orders.OrderStatus;
+import vn.ecommerce.order.orders.PaymentOutcome;
 import vn.ecommerce.order.shipping.ShippingApi;
 
 /** Checklist go-live mục 17: thanh toán về trễ sau khi đơn đã hết hạn/hủy (B-21) và webhook lặp lại. */
@@ -62,7 +63,7 @@ class OrderServiceImplTest {
         Order order = onlineOrder(OrderStatus.AWAITING_PAYMENT, OrderStatus.CANCELLED);
         when(orders.findById(order.getId())).thenReturn(Optional.of(order));
 
-        service.markPaid(order.getId(), "TXN-LATE");
+        assertThat(service.markPaid(order.getId(), "TXN-LATE")).isEqualTo(new PaymentOutcome("ORD-261023-0001", true));
 
         verify(stateMachine, never()).transition(any(), any(), any());
         verify(orders, never()).save(any());
@@ -74,7 +75,7 @@ class OrderServiceImplTest {
         Order order = onlineOrder(OrderStatus.AWAITING_PAYMENT, OrderStatus.CONFIRMED);
         when(orders.findById(order.getId())).thenReturn(Optional.of(order));
 
-        service.markPaid(order.getId(), "TXN-1");
+        assertThat(service.markPaid(order.getId(), "TXN-1").orderCancelled()).isFalse();
 
         verify(stateMachine, never()).transition(any(), any(), any());
         verify(orders, never()).save(any());

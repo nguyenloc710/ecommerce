@@ -13,4 +13,7 @@ public final class PaymentErrorKeys {
     public static final String AMOUNT_MISMATCH = "payment.amount-mismatch";
     /** {0} = cổng (MOMO...). */
     public static final String GATEWAY_UNAVAILABLE = "payment.gateway-unavailable";
+    public static final String REFUND_NOT_FOUND = "payment.refund-not-found";
+    /** {0} = mã đơn. */
+    public static final String REFUND_ALREADY_DONE = "payment.refund-already-done";
 }

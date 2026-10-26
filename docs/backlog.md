@@ -71,7 +71,7 @@ Quy ước mã: `E<epic>.<n>`. Tiêu chí hoàn thành phải đo được (endp
 - [ ] E6.4 Keycloak theme Keycloakify tiếng Việt; Google login. **Theme xong** (B-28): `frontend/keycloak-theme` (login, 141 câu tiếng Việt, style storefront), image Keycloak kèm theme, CI; đã chạy trên Keycloak local. **Còn:** Google login cần OAuth client (Google Cloud Console) của chủ shop
 - [x] E6.5 Realm as code (`deploy/keycloak`), CNPG, RabbitMQ, Valkey manifest, Argo CD app-of-apps, Sealed Secrets (B-26). Đã kiểm tra `kubectl kustomize` mọi thư mục + parse YAML; **chưa apply lên cluster thật** (chưa có VPS)
 - [x] E6.7 Storefront lên cluster (B-27): Dockerfile standalone (build riêng từng môi trường), `deploy/storefront` (probe `/api/health`, non-root, read-only FS + emptyDir cache, NetworkPolicy, PDB prod), `storefront-secrets` trong seal-env.sh, Application Argo CD, workflow `storefront-ci`; order-service có `PAYMENT_MOCK_ENABLED` (prod tắt). Đã chạy thử image read-only/uid 1000; chưa chạy trên cluster
-- [ ] E6.6 Load test checkout, thử restore backup, checklist go-live mục 17 thiết kế. **Đã chuẩn bị:** script k6 `loadtest/`, manifest diễn tập khôi phục `deploy/data/restore/`, `docs/runbook.md`, tình trạng từng mục ở `docs/go-live-checklist.md` (thêm test iss/aud/hết hạn và thanh toán trễ). **Chờ:** staging (VPS, R2), stack giám sát
+- [ ] E6.6 Load test checkout, thử restore backup, checklist go-live mục 17 thiết kế. **Đã chuẩn bị:** script k6 `loadtest/`, manifest diễn tập khôi phục `deploy/data/restore/`, `docs/runbook.md`, tình trạng từng mục ở `docs/go-live-checklist.md` (thêm test iss/aud/hết hạn và thanh toán trễ), OTP bắt buộc cho nhân viên (B-34), trang hoàn tiền tay `/admin/hoan-tien` (B-33). **Chờ:** staging (VPS, R2), stack giám sát
 
 ## E7. Tăng trưởng
 

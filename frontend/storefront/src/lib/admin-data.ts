@@ -1,7 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { ApiError } from "@/lib/api";
-import type { AdminOrderRow, AdminReviewRow, BrandOption, CategoryOption, GoldRateView, InventoryRow, Paged, ProductAdmin, ProductAdminRow, RevenueReport } from "@/lib/admin-shared";
+import type { AdminOrderRow, AdminRefundRow, AdminReviewRow, BrandOption, CategoryOption, GoldRateView, InventoryRow, Paged, ProductAdmin, ProductAdminRow, RevenueReport } from "@/lib/admin-shared";
 import type { OrderStatus, OrderView } from "@/lib/checkout-shared";
 import type { AdminFlashSaleDetail, AdminFlashSaleRow } from "@/lib/flash-sale-shared";
 import { authFetch } from "@/lib/session";
@@ -44,6 +44,10 @@ export async function listBrands(): Promise<BrandOption[]> {
 
 export const listReviews = (o: { status: string; page: number }) =>
   get<Paged<AdminReviewRow>>(`/api/admin/catalog/reviews${qs({ status: o.status, page: o.page, size: 20 })}`);
+
+/** Đơn đã hủy nhưng đã nhận tiền (B-33); chờ hoàn xếp cũ nhất trước. */
+export const listRefunds = (o: { status: string; page: number; size?: number }) =>
+  get<Paged<AdminRefundRow>>(`/api/admin/payments/refunds${qs({ status: o.status, page: o.page, size: o.size ?? 20 })}`);
 
 export const listInventory = (o: { q?: string; lowStock?: boolean; page: number }) =>
   get<Paged<InventoryRow>>(`/api/admin/inventory${qs({ q: o.q, lowStock: o.lowStock, page: o.page, size: 50 })}`);

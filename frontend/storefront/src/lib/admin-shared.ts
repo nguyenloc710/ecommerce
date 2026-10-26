@@ -240,3 +240,35 @@ export function periodLabel(period: string, monthly: boolean) {
 }
 
 export const PAYMENT_METHOD_LABELS: Record<string, string> = { COD: "Thanh toán khi nhận hàng", MOCK_ONLINE: "Online (thử nghiệm)", VNPAY: "VNPay", MOMO: "MoMo" };
+
+// ---- Hoàn tiền tay (B-33): đơn đã hủy nhưng đã nhận tiền ----
+
+export type RefundStatus = "PENDING" | "DONE";
+
+export const REFUND_TABS: { status: RefundStatus; label: string }[] = [
+  { status: "PENDING", label: "Chờ hoàn" },
+  { status: "DONE", label: "Đã hoàn" },
+];
+
+export const REFUND_CAUSE_LABELS: Record<string, string> = {
+  PAID_AFTER_CANCEL: "Tiền về sau khi đơn đã hủy",
+  AMOUNT_MISMATCH: "Khách trả sai số tiền, đơn bị hủy",
+  CANCELLED_AFTER_PAID: "Đơn đã thanh toán bị hủy",
+};
+
+export type AdminRefundRow = {
+  id: string;
+  orderCode: string;
+  provider: string;
+  providerTxnId: string | null;
+  amount: number;
+  cause: keyof typeof REFUND_CAUSE_LABELS;
+  cancelReason: string | null;
+  status: RefundStatus;
+  reference: string | null;
+  note: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  completedBy: string | null;
+  version: number;
+};

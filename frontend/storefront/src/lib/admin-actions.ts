@@ -189,6 +189,23 @@ export async function moderateReview(reviewId: string, action: "approve" | "reje
   }
 }
 
+// ---- Hoàn tiền tay (B-33) ----
+
+/** Đánh dấu đã hoàn sau khi shop hoàn ở trang quản trị của cổng; chỉ ADMIN (backend kiểm tra), gửi version đã đọc. */
+export async function completeRefund(id: string, version: number, reference: string, note?: string): Promise<Result> {
+  if (!reference.trim()) return { ok: false, message: "Vui lòng nhập mã giao dịch hoàn tiền." };
+  try {
+    await send(`/api/admin/payments/refunds/${encodeURIComponent(id)}/complete`, "POST", {
+      version,
+      reference: reference.trim().slice(0, 100),
+      note: note?.trim().slice(0, 255) || undefined,
+    });
+    return { ok: true };
+  } catch (error) {
+    return toError(error);
+  }
+}
+
 // ---- Flash sale (E7.2) ----
 
 /** Tìm SKU để thêm vào chương trình (dùng lại API tồn kho: tìm theo mã SKU hoặc tên sản phẩm). */

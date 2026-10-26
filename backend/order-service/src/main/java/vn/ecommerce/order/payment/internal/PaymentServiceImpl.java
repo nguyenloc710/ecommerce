@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.ecommerce.common.web.error.ForbiddenException;
 import vn.ecommerce.common.web.error.NotFoundException;
 import vn.ecommerce.order.orders.OrdersApi;
+import vn.ecommerce.order.orders.PaymentOutcome;
 import vn.ecommerce.order.payment.PaymentInitResult;
 import vn.ecommerce.order.payment.PaymentMethod;
 import vn.ecommerce.order.payment.PaymentRequest;
@@ -22,11 +23,12 @@ import vn.ecommerce.order.payment.PaymentRequest;
 @Transactional
 class PaymentServiceImpl implements PaymentService {
 
-    static final String REASON_AMOUNT_MISMATCH = "amount-mismatch";
+    static final String REASON_AMOUNT_MISMATCH = Payment.REASON_AMOUNT_MISMATCH;
 
     private final PaymentRepository payments;
     private final PaymentGatewayRegistry gateways;
     private final OrdersApi orders;
+    private final RefundService refunds;
 
     @Override
     public PaymentInitResult initiate(PaymentRequest request) {
@@ -66,10 +68,11 @@ class PaymentServiceImpl implements PaymentService {
             String reason = note.success() && !success ? REASON_AMOUNT_MISMATCH : note.reason();
             payment.settle(success, note.txnId(), raw(note, reason));
             payments.save(payment);
-            if (success) {
-                orders.markPaid(note.orderId(), note.txnId());
-            } else {
-                orders.markPaymentFailed(note.orderId(), reason == null ? "declined" : reason);
+            PaymentOutcome outcome = success
+                    ? orders.markPaid(note.orderId(), note.txnId())
+                    : orders.markPaymentFailed(note.orderId(), reason == null ? "declined" : reason);
+            if (outcome.orderCancelled()) {
+                refunds.openForCancelledWebhook(payment, outcome.orderCode());
             }
             log.info("Webhook {} giao dịch {}: {}", provider, note.txnId(), success ? "thành công" : "thất bại (" + reason + ")");
         } finally {
@@ -90,8 +93,8 @@ class PaymentServiceImpl implements PaymentService {
         Map<String, Object> raw = new HashMap<>();
         raw.put("txnId", note.txnId());
         raw.put("success", note.success());
-        raw.put("amount", note.amount());
-        raw.put("reason", reason);
+        raw.put(Payment.RAW_AMOUNT, note.amount());
+        raw.put(Payment.RAW_REASON, reason);
         return raw;
     }
 }

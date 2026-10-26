@@ -36,7 +36,10 @@ import vn.ecommerce.order.orders.internal.OrderService;
 import vn.ecommerce.order.orders.internal.report.RevenueReport;
 import vn.ecommerce.order.orders.internal.report.RevenueReportService;
 import vn.ecommerce.order.payment.PaymentMethod;
+import vn.ecommerce.order.payment.internal.PaymentRefund;
 import vn.ecommerce.order.payment.internal.PaymentService;
+import vn.ecommerce.order.payment.internal.RefundService;
+import vn.ecommerce.order.payment.internal.RefundView;
 import vn.ecommerce.order.promotion.VoucherView;
 import vn.ecommerce.order.promotion.internal.PromotionService;
 import vn.ecommerce.order.shipping.internal.ShippingService;
@@ -65,6 +68,7 @@ class OrderApiContractTest {
     @MockitoBean OrderAdminService orderAdminService;
     @MockitoBean PaymentService paymentService;
     @MockitoBean RevenueReportService revenueReportService;
+    @MockitoBean RefundService refundService;
 
     private static JwtRequestPostProcessor as(String... roles) {
         return jwt().jwt(j -> j.subject(SUB).claim("email", "lan@example.com").claim("roles", List.of(roles)))
@@ -130,6 +134,28 @@ class OrderApiContractTest {
         mockMvc.perform(get("/api/admin/reports/revenue").param("from", "2026-10-01").param("to", "2026-10-01").with(as("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.series[0].period").value("2026-10-01"));
+    }
+
+    @Test
+    void refunds_staffCanList_onlyAdminCompletes() throws Exception {
+        UUID id = UUID.randomUUID();
+        RefundView done = new RefundView(id, "ORD-1", PaymentMethod.VNPAY, "txn-1", new BigDecimal("430000"), PaymentRefund.RefundCause.PAID_AFTER_CANCEL,
+                null, PaymentRefund.RefundStatus.DONE, "RF-1", null, Instant.now(), Instant.now(), SUB, 1);
+        when(refundService.list(PaymentRefund.RefundStatus.PENDING, 0, 20)).thenReturn(PageResponse.of(List.of(), 0, 20, 0));
+        when(refundService.complete(id, 0, "RF-1", null)).thenReturn(done);
+        String body = "{\"version\":0,\"reference\":\" RF-1 \"}";
+
+        mockMvc.perform(get("/api/admin/payments/refunds").with(as("STAFF"))).andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/payments/refunds").with(as("CUSTOMER"))).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/admin/payments/refunds/" + id + "/complete").with(as("STAFF")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/admin/payments/refunds/" + id + "/complete").with(as("ADMIN")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("DONE"));
+        mockMvc.perform(post("/api/admin/payments/refunds/" + id + "/complete").with(as("ADMIN")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":0,\"reference\":\"\"}"))
+                .andExpect(status().isBadRequest());
+        verify(refundService).complete(id, 0, "RF-1", null);
     }
 
     @Test

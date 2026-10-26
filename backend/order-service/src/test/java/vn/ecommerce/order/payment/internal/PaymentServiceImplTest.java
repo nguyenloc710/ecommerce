@@ -21,6 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 import vn.ecommerce.common.web.error.ForbiddenException;
 import vn.ecommerce.common.web.security.HmacSignatures;
 import vn.ecommerce.order.orders.OrdersApi;
+import vn.ecommerce.order.orders.PaymentOutcome;
 import vn.ecommerce.order.payment.PaymentInitResult;
 import vn.ecommerce.order.payment.PaymentMethod;
 import vn.ecommerce.order.payment.PaymentRequest;
@@ -33,6 +34,7 @@ class PaymentServiceImplTest {
 
     @Mock PaymentRepository payments;
     @Mock OrdersApi orders;
+    @Mock RefundService refunds;
 
     private PaymentServiceImpl service;
 
@@ -40,7 +42,7 @@ class PaymentServiceImplTest {
     void setUp() {
         PaymentProperties props = new PaymentProperties(new PaymentProperties.Mock(true, SECRET, "http://localhost:3000/thanh-toan/mock/{orderId}?ma={orderCode}"), null, null);
         PaymentGatewayRegistry registry = new PaymentGatewayRegistry(List.of(new CodGateway(), new MockOnlineGateway(props, JsonMapper.builder().build())));
-        service = new PaymentServiceImpl(payments, registry, orders);
+        service = new PaymentServiceImpl(payments, registry, orders, refunds);
     }
 
     @Test
@@ -77,6 +79,7 @@ class PaymentServiceImplTest {
         Payment pending = new Payment(ORDER, PaymentMethod.MOCK_ONLINE, new BigDecimal("430000"), Payment.PaymentStatus.PENDING, "http://pay");
         when(payments.findByProviderAndProviderTxnId(PaymentMethod.MOCK_ONLINE, "txn-1")).thenReturn(Optional.empty());
         when(payments.findFirstByOrderIdOrderByCreatedAtDesc(ORDER)).thenReturn(Optional.of(pending));
+        when(orders.markPaid(ORDER, "txn-1")).thenReturn(new PaymentOutcome("ORD-1", false));
         String body = body("txn-1", "SUCCESS", "430000");
 
         service.handleWebhook(PaymentMethod.MOCK_ONLINE, HmacSignatures.sign(SECRET, body), body);
@@ -85,6 +88,21 @@ class PaymentServiceImplTest {
         assertThat(pending.getProviderTxnId()).isEqualTo("txn-1");
         assertThat(pending.getPaidAt()).isNotNull();
         verify(orders).markPaid(ORDER, "txn-1");
+        verifyNoInteractions(refunds);
+    }
+
+    @Test
+    void webhook_successAfterOrderCancelled_opensRefund() {
+        Payment pending = new Payment(ORDER, PaymentMethod.MOCK_ONLINE, new BigDecimal("430000"), Payment.PaymentStatus.PENDING, "http://pay");
+        when(payments.findByProviderAndProviderTxnId(PaymentMethod.MOCK_ONLINE, "txn-late")).thenReturn(Optional.empty());
+        when(payments.findFirstByOrderIdOrderByCreatedAtDesc(ORDER)).thenReturn(Optional.of(pending));
+        when(orders.markPaid(ORDER, "txn-late")).thenReturn(new PaymentOutcome("ORD-1", true));
+        String body = body("txn-late", "SUCCESS", "430000");
+
+        service.handleWebhook(PaymentMethod.MOCK_ONLINE, HmacSignatures.sign(SECRET, body), body);
+
+        assertThat(pending.getStatus()).isEqualTo(Payment.PaymentStatus.SUCCEEDED);
+        verify(refunds).openForCancelledWebhook(pending, "ORD-1");
     }
 
     @Test
@@ -104,11 +122,16 @@ class PaymentServiceImplTest {
         Payment pending = new Payment(ORDER, PaymentMethod.MOCK_ONLINE, new BigDecimal("430000"), Payment.PaymentStatus.PENDING, "http://pay");
         when(payments.findByProviderAndProviderTxnId(any(), any())).thenReturn(Optional.empty());
         when(payments.findFirstByOrderIdOrderByCreatedAtDesc(ORDER)).thenReturn(Optional.of(pending));
+        when(orders.markPaymentFailed(ORDER, PaymentServiceImpl.REASON_AMOUNT_MISMATCH)).thenReturn(new PaymentOutcome("ORD-1", true));
         String body = body("txn-2", "SUCCESS", "1000");
 
         service.handleWebhook(PaymentMethod.MOCK_ONLINE, HmacSignatures.sign(SECRET, body), body);
 
         assertThat(pending.getStatus()).isEqualTo(Payment.PaymentStatus.FAILED);
+        // Khách đã bị trừ 1.000đ: mở yêu cầu hoàn đúng số đã trả
+        assertThat(pending.moneyReceived()).isTrue();
+        assertThat(pending.receivedAmount()).isEqualByComparingTo("1000");
+        verify(refunds).openForCancelledWebhook(pending, "ORD-1");
         verify(orders).markPaymentFailed(ORDER, PaymentServiceImpl.REASON_AMOUNT_MISMATCH);
         verify(orders, never()).markPaid(any(), any());
     }
@@ -118,11 +141,14 @@ class PaymentServiceImplTest {
         Payment pending = new Payment(ORDER, PaymentMethod.MOCK_ONLINE, new BigDecimal("430000"), Payment.PaymentStatus.PENDING, "http://pay");
         when(payments.findByProviderAndProviderTxnId(any(), any())).thenReturn(Optional.empty());
         when(payments.findFirstByOrderIdOrderByCreatedAtDesc(ORDER)).thenReturn(Optional.of(pending));
+        when(orders.markPaymentFailed(ORDER, "insufficient-funds")).thenReturn(new PaymentOutcome("ORD-1", true));
         String body = "{\"orderId\":\"" + ORDER + "\",\"txnId\":\"txn-3\",\"status\":\"FAILED\",\"amount\":430000,\"reason\":\"insufficient-funds\"}";
 
         service.handleWebhook(PaymentMethod.MOCK_ONLINE, HmacSignatures.sign(SECRET, body), body);
 
         verify(orders).markPaymentFailed(ORDER, "insufficient-funds");
+        assertThat(pending.moneyReceived()).isFalse();
+        verify(refunds).openForCancelledWebhook(pending, "ORD-1");
     }
 
     private static String body(String txn, String status, String amount) {

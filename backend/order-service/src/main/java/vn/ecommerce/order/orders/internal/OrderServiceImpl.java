@@ -17,6 +17,7 @@ import vn.ecommerce.common.web.error.PageResponse;
 import vn.ecommerce.order.orders.OrderStatus;
 import vn.ecommerce.order.orders.OrderSummaryView;
 import vn.ecommerce.order.orders.OrderView;
+import vn.ecommerce.order.orders.PaymentOutcome;
 import vn.ecommerce.order.orders.PlaceOrderCommand;
 import vn.ecommerce.order.shipping.ShipmentStatusChanged;
 import vn.ecommerce.order.shipping.ShippingApi;
@@ -59,26 +60,29 @@ class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void markPaid(UUID orderId, String providerTxnId) {
+    public PaymentOutcome markPaid(UUID orderId, String providerTxnId) {
         Order order = find(orderId);
         if (order.getStatus() == OrderStatus.AWAITING_PAYMENT) {
             stateMachine.transition(order, OrderStatus.CONFIRMED, "paid:" + providerTxnId);
             orders.save(order);
         } else if (order.getStatus() == OrderStatus.CANCELLED) {
-            // B-21: tiền về sau khi đơn đã hủy (hết hạn) → cần hoàn tiền tay; không đổi trạng thái đơn
+            // B-21: tiền về sau khi đơn đã hủy (hết hạn) → hoàn tiền tay (B-33); không đổi trạng thái đơn
             log.warn("Đơn {} đã hủy nhưng nhận thanh toán {} → cần hoàn tiền", order.getCode(), providerTxnId);
+            return new PaymentOutcome(order.getCode(), true);
         } else {
             log.info("Đơn {} đã ở {}; bỏ qua webhook thanh toán {} (idempotent)", order.getCode(), order.getStatus(), providerTxnId);
         }
+        return new PaymentOutcome(order.getCode(), false);
     }
 
     @Override
-    public void markPaymentFailed(UUID orderId, String reason) {
+    public PaymentOutcome markPaymentFailed(UUID orderId, String reason) {
         Order order = find(orderId);
         if (order.getStatus() == OrderStatus.AWAITING_PAYMENT) {
             stateMachine.transition(order, OrderStatus.CANCELLED, REASON_PAYMENT_FAILED_PREFIX + ":" + reason);
             orders.save(order);
         }
+        return new PaymentOutcome(order.getCode(), order.getStatus() == OrderStatus.CANCELLED);
     }
 
     @Override

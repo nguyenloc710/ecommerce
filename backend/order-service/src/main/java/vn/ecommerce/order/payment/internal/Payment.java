@@ -24,6 +24,10 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Payment extends AuditableEntity {
 
+    static final String REASON_AMOUNT_MISMATCH = "amount-mismatch";
+    static final String RAW_REASON = "reason";
+    static final String RAW_AMOUNT = "amount";
+
     @Column(name = "order_id", nullable = false, updatable = false)
     private UUID orderId;
 
@@ -68,6 +72,21 @@ public class Payment extends AuditableEntity {
 
     public boolean isSettled() {
         return status == PaymentStatus.SUCCEEDED || status == PaymentStatus.FAILED;
+    }
+
+    /** Cổng báo đã trừ tiền khách: thành công, hoặc thành công nhưng sai số tiền (payment FAILED, đơn bị hủy). */
+    public boolean moneyReceived() {
+        return status == PaymentStatus.SUCCEEDED || amountMismatch();
+    }
+
+    public boolean amountMismatch() {
+        return status == PaymentStatus.FAILED && rawCallback != null
+                && REASON_AMOUNT_MISMATCH.equals(rawCallback.get(RAW_REASON)) && rawCallback.get(RAW_AMOUNT) != null;
+    }
+
+    /** Số tiền khách thực trả: số cổng báo khi sai số tiền, còn lại bằng số tiền đơn. */
+    public BigDecimal receivedAmount() {
+        return amountMismatch() ? new BigDecimal(rawCallback.get(RAW_AMOUNT).toString()) : amount;
     }
 
     public enum PaymentStatus {

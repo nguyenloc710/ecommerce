@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminHeader } from "@/components/admin/admin-ui";
-import { listAdminOrders, listInventory } from "@/lib/admin-data";
+import { listAdminOrders, listInventory, listRefunds } from "@/lib/admin-data";
 import { requireStaff } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Tổng quan" };
@@ -21,17 +21,20 @@ export default function Page() {
 /** Số việc cần làm hôm nay; mỗi ô dẫn tới danh sách đã lọc sẵn. */
 async function Overview() {
   const session = await requireStaff("/admin");
-  const [toProcess, packing, awaitingPayment, lowStock] = await Promise.all([
+  const [toProcess, packing, awaitingPayment, lowStock, refunds] = await Promise.all([
     listAdminOrders({ status: "CONFIRMED", page: 0, size: 1 }),
     listAdminOrders({ status: "PACKING", page: 0, size: 1 }),
     listAdminOrders({ status: "AWAITING_PAYMENT", page: 0, size: 1 }),
     listInventory({ lowStock: true, page: 0 }),
+    listRefunds({ status: "PENDING", page: 0, size: 1 }),
   ]);
   const tiles = [
     { label: "Đơn cần xử lý", value: toProcess.total, href: "/admin/don-hang?tab=can-xu-ly" },
     { label: "Đang đóng gói", value: packing.total, href: "/admin/don-hang?tab=dong-goi" },
     { label: "Chờ thanh toán", value: awaitingPayment.total, href: "/admin/don-hang?tab=cho-thanh-toan" },
     { label: "SKU sắp hết hàng", value: lowStock.total, href: "/admin/ton-kho?sap-het=1" },
+    // Đơn đã hủy nhưng đã nhận tiền (B-33): chỉ hiện khi có việc
+    ...(refunds.total > 0 ? [{ label: "Cần hoàn tiền", value: refunds.total, href: "/admin/hoan-tien" }] : []),
   ];
   return (
     <div className="flex flex-col gap-4">

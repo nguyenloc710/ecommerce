@@ -10,6 +10,7 @@ const items = [
   { href: "/admin/san-pham", label: "Sản phẩm" },
   { href: "/admin/ton-kho", label: "Tồn kho" },
   { href: "/admin/danh-gia", label: "Đánh giá" },
+  { href: "/admin/hoan-tien", label: "Hoàn tiền" },
   { href: "/admin/flash-sale", label: "Flash sale" },
   { href: "/admin/gia-vang", label: "Giá vàng" },
   { href: "/admin/bao-cao", label: "Báo cáo" },
